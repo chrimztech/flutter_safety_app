@@ -1,6 +1,6 @@
 // pages/compliance_tracking_page.dart
 import 'package:flutter/material.dart';
-
+import 'quickaccess_bar.dart';
 class ComplianceTrackingPage extends StatefulWidget {
   const ComplianceTrackingPage({super.key});
 
@@ -165,6 +165,7 @@ class _ComplianceTrackingPageState extends State<ComplianceTrackingPage> {
           ),
         ),
       ),
+       bottomNavigationBar: const QuickAccessBar(currentLabel: 'Compliance'),
     );
   }
 }

@@ -1,5 +1,6 @@
 // pages/risk_assessment_page.dart
 import 'package:flutter/material.dart';
+import 'quickaccess_bar.dart';
 
 class RiskAssessmentPage extends StatefulWidget {
   const RiskAssessmentPage({super.key});
@@ -231,6 +232,7 @@ class _RiskAssessmentPageState extends State<RiskAssessmentPage> {
         backgroundColor: theme.colorScheme.primary,
         elevation: 5,
       ),
+       bottomNavigationBar: const QuickAccessBar(currentLabel: 'Risk'),
     );
   }
 }

@@ -1,6 +1,7 @@
 // pages/training_management_page.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'quickaccess_bar.dart';
 
 class TrainingManagementPage extends StatefulWidget {
   const TrainingManagementPage({super.key});
@@ -209,6 +210,7 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
         label: const Text('Add Training'),
         backgroundColor: theme.colorScheme.primary,
       ),
+       bottomNavigationBar: const QuickAccessBar(currentLabel: 'Training'),
     );
   }
 }
