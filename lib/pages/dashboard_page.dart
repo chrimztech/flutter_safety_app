@@ -11,9 +11,9 @@ import 'compliance_tracking_page.dart';
 import 'hazard_detection_page.dart';
 import 'analytics_page.dart';
 import 'virtualisation_page.dart';
-import 'safety_page.dart';
-import 'emergency_page.dart';
-import 'calendar.dart';
+import 'safety_page.dart'; // Assuming this is SafetySheetsPage
+import 'emergency_page.dart'; // Assuming this is EmergencyContactsPage
+import 'calendar.dart'; // Assuming this is CalendarPage
 import 'user_profile_page.dart';
 import 'settings_page.dart';
 import 'login_page.dart';
@@ -27,7 +27,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class DashboardPageState extends State<DashboardPage> {
-  final String _userName = "John Doe";
+  final String _userName = "Chrishent Matakala"; // Updated username for consistency
 
   List<Map<String, String>> calendarEvents = [
     {
@@ -58,12 +58,16 @@ class DashboardPageState extends State<DashboardPage> {
     String formattedDate = event["date"] ?? "";
     try {
       formattedDate = DateFormat.yMMMMd().format(DateTime.parse(event["date"]!));
-    } catch (_) {}
+    } catch (_) {
+      // Fallback if date parsing fails
+      formattedDate = "Unknown Date";
+    }
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias, // Ensures inkwell ripple respects border radius
       child: InkWell(
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CalendarPage())),
         borderRadius: BorderRadius.circular(16),
@@ -131,10 +135,11 @@ class DashboardPageState extends State<DashboardPage> {
         borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(
+            // Changed to blue gradient
             gradient: LinearGradient(
               colors: [
-                Theme.of(context).colorScheme.primary,
-                Theme.of(context).colorScheme.primaryContainer,
+                Colors.blue.shade600, // Start blue
+                Colors.blue.shade800, // End blue
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -185,9 +190,6 @@ class DashboardPageState extends State<DashboardPage> {
       {"icon": Icons.memory, "label": "Virtualization", "page": const VirtualizationPage()},
       {"icon": Icons.contact_phone, "label": "Emergency", "page": const EmergencyContactsPage()},
       {"icon": Icons.person, "label": "Profile", "page": const UserProfilePage()},
-      {"icon": Icons.gavel, "label": "Compliance", "page": const ComplianceTrackingPage()},
-      {"icon": Icons.military_tech, "label": "Risk Assessment", "page": const RiskAssessmentPage()},
-      {"icon": Icons.school, "label": "Training", "page": const TrainingManagementPage()},
     ];
 
     return Padding(
@@ -212,12 +214,16 @@ class DashboardPageState extends State<DashboardPage> {
 
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
+      // AppBar is now transparent with a subtle gradient for visual flair, not solid blue
+      backgroundColor: Colors.blue,
+      elevation: 0, // No shadow for a flat look
       flexibleSpace: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.tertiary],
+            colors: [
+              Theme.of(context).colorScheme.primary.withOpacity(0.8), // Primary color with opacity
+              Theme.of(context).colorScheme.primary.withOpacity(0.6), // Lighter primary color with opacity
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -230,62 +236,46 @@ class DashboardPageState extends State<DashboardPage> {
             ),
           ],
         ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      getGreeting(),
-                      style: const TextStyle(fontSize: 16, color: Colors.white70, fontWeight: FontWeight.w500),
-                    ),
-                    Text(
-                      _userName,
-                      style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                PopupMenuButton<String>(
-                  icon: const CircleAvatar(
-                    backgroundColor: Colors.white30,
-                    child: Icon(Icons.person, color: Colors.white, size: 24),
-                  ),
-                  onSelected: (value) {
-                    if (value == 'profile') {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const UserProfilePage()));
-                    } else if (value == 'settings') {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage()));
-                    } else if (value == 'logout') {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (_) => const LoginPage()),
-                        (route) => false,
-                      );
-                    }
-                  },
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(value: 'profile', child: Text('Profile')),
-                    PopupMenuItem(value: 'settings', child: Text('Settings')),
-                    PopupMenuItem(value: 'logout', child: Text('Logout')),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
+      // Only the profile icon and drawer icon remain in the AppBar
+      title: const Text(
+        'Dashboard', // A simple title for the AppBar
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      ),
+      centerTitle: true,
+      actions: [
+        PopupMenuButton<String>(
+          icon: const CircleAvatar(
+            backgroundColor: Colors.white30,
+            child: Icon(Icons.person, color: Colors.white, size: 24),
+          ),
+          onSelected: (value) {
+            if (value == 'profile') {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const UserProfilePage()));
+            } else if (value == 'settings') {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage()));
+            } else if (value == 'logout') {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+                (route) => false,
+              );
+            }
+          },
+          itemBuilder: (context) => const [
+            PopupMenuItem(value: 'profile', child: Text('Profile')),
+            PopupMenuItem(value: 'settings', child: Text('Settings')),
+            PopupMenuItem(value: 'logout', child: Text('Logout')),
+          ],
+        ),
+      ],
     );
   }
 
   // Modified _buildDrawer to accept currentRouteLabel
   Widget _buildDrawer(BuildContext context, String currentRouteLabel) {
     final drawerItems = [
-      {"label": "Home", "icon": Icons.home, "page": const DashboardPage()}, // Added Home to drawer items
+      {"label": "Home", "icon": Icons.home, "page": const DashboardPage()},
       {"label": "Risk Assessment", "icon": Icons.warning_amber, "page": const RiskAssessmentPage()},
       {"label": "Training Management", "icon": Icons.school, "page": const TrainingManagementPage()},
       {"label": "Compliance Tracking", "icon": Icons.track_changes, "page": const ComplianceTrackingPage()},
@@ -302,41 +292,37 @@ class DashboardPageState extends State<DashboardPage> {
     return Drawer(
       child: Column(
         children: [
-          DrawerHeader(
-            margin: EdgeInsets.zero,
-            padding: EdgeInsets.zero,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.tertiary],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.white,
-                    child: Icon(Icons.shield, size: 40, color: Theme.of(context).colorScheme.primary),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    "Environmental Safety App",
-                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    "Your safety companion",
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          // In _buildDrawer method
+DrawerHeader(
+  // Removed margin: EdgeInsets.zero and padding: EdgeInsets.zero
+  decoration: BoxDecoration(
+    gradient: LinearGradient(
+      colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.tertiary],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+  ),
+  child: Column( // Directly put Column here, or keep Container with adjusted padding
+    mainAxisAlignment: MainAxisAlignment.end, // Keeps content at the bottom
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      CircleAvatar(
+        radius: 30,
+        backgroundColor: Colors.white,
+        child: Icon(Icons.shield, size: 40, color: Theme.of(context).colorScheme.primary),
+      ),
+      const SizedBox(height: 12),
+      const Text(
+        "Environmental Safety App",
+        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+      ),
+      const Text(
+        "Your safety companion",
+        style: TextStyle(color: Colors.white70, fontSize: 13),
+      ),
+    ],
+  ),
+),
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
@@ -395,12 +381,12 @@ class DashboardPageState extends State<DashboardPage> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      extendBodyBehindAppBar: true, // Allows body to extend behind the AppBar
       appBar: _buildAppBar(context),
-      // Pass the current label 'Home' to the drawer
       drawer: _buildDrawer(context, 'Home'),
       body: Stack(
         children: [
+          // Background gradient for the entire screen
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -411,20 +397,38 @@ class DashboardPageState extends State<DashboardPage> {
             ),
           ),
           SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, kToolbarHeight * 2.2, 20, 20),
+            // Adjusted padding to account for the AppBar height and the new greeting section
+            padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + kToolbarHeight + 20, 20, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  "Explore your dashboard",
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                      ),
+                // Moved Greeting and Username here, below the AppBar
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      getGreeting(),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                    Text(
+                      _userName,
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            color: colorScheme.onSurface,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 24), // Space between greeting and grid
+
+                // Grid Access Card
                 _buildGridAccessCard(context),
                 const SizedBox(height: 30),
+
+                // Upcoming Events Section
                 Text(
                   "Upcoming Events",
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(

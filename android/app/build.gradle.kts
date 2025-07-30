@@ -18,14 +18,14 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
-    defaultConfig {
-        applicationId = "com.example.flutter_app_scaffold"
-       
-       
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
-    }
+   defaultConfig {
+    applicationId = "com.example.flutter_app_scaffold"
+    minSdkVersion(21)
+    targetSdkVersion(33)
+    versionCode = 1
+    versionName = "1.0"
+}
+
 
     buildTypes {
         release {

@@ -193,10 +193,16 @@ class _RiskAssessmentPageState extends State<RiskAssessmentPage> {
                 }).toList(),
                 onChanged: (RiskAssessmentStatus? newValue) {
                   if (newValue != null) {
-                    setState(() { // This setState is for the page's state, but it might rebuild the dialog too.
-                                  // For a dialog, it's often better to use a StateSetter passed from StatefulBuilder
-                                  // if you want internal dialog state updates without closing/reopening.
-                                  // In this case, since the dialog might be re-opened for date, it's fine.
+                    // Using setState of the dialog's StatefulBuilder to update the dropdown value
+                    // without causing the entire page to rebuild or the dialog to close.
+                    // This requires wrapping the DropdownButtonFormField in a StatefulBuilder if it's not already.
+                    // For simplicity, we'll let the outer setState handle it, or if this dropdown
+                    // is part of a larger form, a form-level StatefulWidget might manage this.
+                    // For now, this setState would rebuild the dialog if it's the main state.
+                    // If you want to update *only* the dropdown without closing the dialog,
+                    // you'd typically wrap this DropdownButtonFormField in its own StatefulBuilder,
+                    // similar to how the date picker updates.
+                    setState(() {
                       selectedStatus = newValue;
                     });
                   }
@@ -237,6 +243,7 @@ class _RiskAssessmentPageState extends State<RiskAssessmentPage> {
               } else {
                 // Add new assessment
                 final newAssessment = RiskAssessment(
+                  id: const Uuid().v4(), // Generate a new ID for new assessments
                   title: title,
                   details: detailsController.text.trim(),
                   assessmentDate: selectedDate,
@@ -343,6 +350,7 @@ class _RiskAssessmentPageState extends State<RiskAssessmentPage> {
             ),
             trailing: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min, // <--- Add this line to prevent overflow
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),

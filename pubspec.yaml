@@ -25,8 +25,7 @@ dependencies:
   uuid: ^4.3.3
   image_picker: ^1.0.8
   shared_preferences: ^2.0.12
-
-
+ 
 
 dev_dependencies:
   flutter_test:
@@ -37,6 +36,4 @@ flutter:
   assets:
     - assets/docs/
     - assets/images/
-
-uses-material-design: true
-  
+  uses-material-design: true 

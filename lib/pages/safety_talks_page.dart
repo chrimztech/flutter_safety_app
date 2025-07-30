@@ -2,11 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
-import '../pages/create_safety_talk_page.dart'; // IMPORTANT: Adjust 'my_app_name' to your actual project name
-// IMPORTANT: Adjust 'my_app_name' to your actual project name
-
-// You might need to add a package like 'open_filex' for viewing files:
-import 'package:open_filex/open_filex.dart'; // Add this to your pubspec.yaml if you want to implement file opening
+import '../pages/create_safety_talk_page.dart';
+import 'package:open_filex/open_filex.dart'; // Ensure this import is here
 
 class SafetyTalksPage extends StatefulWidget {
   const SafetyTalksPage({super.key});
@@ -30,6 +27,14 @@ class _SafetyTalk {
 class _SafetyTalksPageState extends State<SafetyTalksPage> {
   // Sample pre-loaded safety talks (you'd typically load these from a database/API)
   final List<_SafetyTalk> _safetyTalks = [
+    // IMPORTANT: For 'assets/docs/' files, you need to ensure they are actually
+    // added to your pubspec.yaml under the 'assets:' section.
+    // Also, OpenFilex.open() works best with absolute file paths, not assets.
+    // For assets, you'd typically load them into memory or a temporary file first.
+    // For this example, we'll assume 'assets/docs/' are placeholders for files
+    // that would be downloaded or generated to a temporary path.
+    // If you literally want to open a PDF from assets, you'd need to copy it
+    // to a temporary directory first.
     _SafetyTalk('Emergency Evacuation Procedures', DateTime(2025, 7, 20), 'assets/docs/emergency_evacuation.pdf', 'Pre-loaded PDF'),
     _SafetyTalk('Proper Lifting Techniques', DateTime(2025, 7, 13), 'assets/docs/lifting_techniques.pdf', 'Pre-loaded PDF'),
     _SafetyTalk('Hazard Communication Standard', DateTime(2025, 7, 6), 'assets/docs/hazard_communication.pdf', 'Pre-loaded PDF'),
@@ -48,7 +53,7 @@ class _SafetyTalksPageState extends State<SafetyTalksPage> {
           _SafetyTalk(
             file.name,
             DateTime.now(),
-            file.path!, // Use file.path for uploaded files
+            file.path!, // Use file.path for uploaded files (this is an absolute path)
             'Uploaded File',
           ),
         );
@@ -66,39 +71,66 @@ class _SafetyTalksPageState extends State<SafetyTalksPage> {
     }
   }
 
-  // Placeholder for viewing a safety talk file
+  // Function to view a safety talk file
   Future<void> _viewTalk(_SafetyTalk talk) async {
     if (talk.type == 'App-Generated') {
-      // For app-generated talks, we can show a detailed view in a dialog or new page
       _showAppGeneratedTalkDetails(talk);
     } else {
-      // For file-based talks, attempt to open the file
-      // In a real application, you would use a package like 'open_filex'
-      // to open the file based on its path.
-      // Example:
-      // try {
-      //   await OpenFilex.open(talk.filePath);
-      // } catch (e) {
-      //   if (mounted) {
-      //     ScaffoldMessenger.of(context).showSnackBar(
-      //       SnackBar(
-      //         content: Text('Could not open file: ${e.toString()}'),
-      //         backgroundColor: Colors.red.shade600,
-      //       ),
-      //     );
-      //   }
-      // }
+      // Use open_filex to open the file
+      try {
+        // For assets, you need to copy them to a temporary directory first
+        // This is a simplified example; a real app might use path_provider
+        // to get application documents directory for temp files.
+        String path = talk.filePath;
+        if (path.startsWith('assets/')) {
+          // This part is complex. OpenFilex cannot directly open assets.
+          // You would need to load the asset as bytes and write it to a temporary file.
+          // For simplicity in this demo, we'll just show a message for assets.
+          // In a real app, you'd use:
+          // final byteData = await rootBundle.load(talk.filePath);
+          // final file = File('${(await getTemporaryDirectory()).path}/${talk.filePath.split('/').last}');
+          // await file.writeAsBytes(byteData.buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
+          // path = file.path;
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Cannot directly open asset files. Please implement asset copying to temp directory: ${talk.filePath}'),
+                backgroundColor: Colors.red.shade600,
+              ),
+            );
+          }
+          return; // Exit if it's an asset for now
+        }
 
-      // For now, we'll just show a simple message.
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Attempting to view: ${talk.title} (${talk.filePath})'),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-          ),
-        );
+        final result = await OpenFilex.open(path);
+        if (mounted) {
+          if (result.type == ResultType.done) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Opened ${talk.title}'),
+                backgroundColor: Colors.green.shade600,
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to open ${talk.title}: ${result.message}'),
+                backgroundColor: Colors.red.shade600,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error opening file: ${e.toString()}'),
+              backgroundColor: Colors.red.shade600,
+            ),
+          );
+        }
+        debugPrint('Error opening file: $e');
       }
-      debugPrint('Viewing Safety Talk: ${talk.title} at ${talk.filePath}');
     }
   }
 
@@ -184,7 +216,8 @@ class _SafetyTalksPageState extends State<SafetyTalksPage> {
           'Safety Talks & Reports',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        // Set AppBar background color to blue
+        backgroundColor: Colors.blue.shade700, // Changed to a specific blue shade
         iconTheme: const IconThemeData(color: Colors.white), // For back button icon
       ),
       body: Padding(
@@ -214,7 +247,7 @@ class _SafetyTalksPageState extends State<SafetyTalksPage> {
                 Expanded(
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                      backgroundColor: Theme.of(context).colorScheme.secondary, // Uses secondary color (often blue/accent)
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -231,9 +264,9 @@ class _SafetyTalksPageState extends State<SafetyTalksPage> {
             Text(
               'Available Safety Talks & Reports',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
             ),
             const SizedBox(height: 12),
             Expanded(
