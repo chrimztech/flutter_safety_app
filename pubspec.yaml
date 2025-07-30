@@ -23,6 +23,10 @@ dependencies:
   fl_chart: ^0.68.0
   timeago: ^3.6.0
   uuid: ^4.3.3
+  image_picker: ^1.0.8
+  shared_preferences: ^2.0.12
+
+
 
 dev_dependencies:
   flutter_test:
