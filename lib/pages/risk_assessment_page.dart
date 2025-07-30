@@ -1,6 +1,9 @@
 // pages/risk_assessment_page.dart
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 import 'quickaccess_bar.dart';
+import '../models/risk_assessment_model.dart'; // Ensure this is imported
 
 class RiskAssessmentPage extends StatefulWidget {
   const RiskAssessmentPage({super.key});
@@ -9,200 +12,463 @@ class RiskAssessmentPage extends StatefulWidget {
   State<RiskAssessmentPage> createState() => _RiskAssessmentPageState();
 }
 
-class _RiskAssessmentPageState extends State<RiskAssessmentPage> {
-  final List<Map<String, dynamic>> _assessments = [
-    {
-      'title': 'Chemical Handling',
-      'date': '2025-07-20',
-      'status': 'Open',
-      'details': 'Handling chemicals safely and effectively.',
-    },
-    {
-      'title': 'Machine Operation',
-      'date': '2025-06-15',
-      'status': 'Closed',
-      'details': 'Assessment for machine operation risks.',
-    },
-    {
-      'title': 'Fire Drill',
-      'date': '2025-05-01',
-      'status': 'Open',
-      'details': 'Regular fire safety drill evaluation.',
-    },
-  ];
+enum RiskAssessmentSortOption { dateNewest, dateOldest, titleAsc }
 
-  final _titleController = TextEditingController();
-  final _detailsController = TextEditingController();
+class _RiskAssessmentPageState extends State<RiskAssessmentPage> {
+  final List<RiskAssessment> _allAssessments = [];
+  List<RiskAssessment> _filteredAndSortedAssessments = [];
+
+  final TextEditingController _searchController = TextEditingController();
   final GlobalKey<AnimatedListState> _listKey = GlobalKey();
 
-  void _openAddDialog() {
-    _titleController.clear();
-    _detailsController.clear();
+  RiskAssessmentStatus? _currentStatusFilter;
+  RiskAssessmentSortOption _currentSortOption = RiskAssessmentSortOption.dateNewest;
 
-    showDialog(
+  @override
+  void initState() {
+    super.initState();
+    _initializeMockData();
+    _applyFiltersAndSort();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  void _initializeMockData() {
+    final uuid = const Uuid();
+    _allAssessments.addAll([
+      RiskAssessment(
+        id: uuid.v4(),
+        title: 'Chemical Handling Procedure Review',
+        assessmentDate: DateTime(2025, 7, 20),
+        status: RiskAssessmentStatus.open,
+        details: 'Review of current chemical handling SOPs and spill response plans. Focus on new hazardous materials introduced this quarter.',
+      ),
+      RiskAssessment(
+        id: uuid.v4(),
+        title: 'Machine Guarding Inspection',
+        assessmentDate: DateTime(2025, 6, 15),
+        status: RiskAssessmentStatus.closed,
+        details: 'Inspection of all heavy machinery for proper guarding and emergency stops. All identified issues have been resolved.',
+      ),
+      RiskAssessment(
+        id: uuid.v4(),
+        title: 'Annual Fire Safety Audit',
+        assessmentDate: DateTime(2025, 5, 1),
+        status: RiskAssessmentStatus.review,
+        details: 'Comprehensive audit of fire suppression systems, alarms, and evacuation routes. Awaiting final sign-off from fire marshal.',
+      ),
+      RiskAssessment(
+        id: uuid.v4(),
+        title: 'Ergonomic Workstation Assessment',
+        assessmentDate: DateTime(2025, 7, 29),
+        status: RiskAssessmentStatus.open,
+        details: 'Assessment of office workstations to identify and mitigate ergonomic risks for staff comfort and productivity.',
+      ),
+      RiskAssessment(
+        id: uuid.v4(),
+        title: 'Waste Management Compliance Check',
+        assessmentDate: DateTime(2025, 4, 10),
+        status: RiskAssessmentStatus.closed,
+        details: 'Verification of compliance with local environmental regulations for hazardous and non-hazardous waste disposal.',
+      ),
+    ]);
+  }
+
+  void _onSearchChanged() {
+    _applyFiltersAndSort();
+  }
+
+  void _applyFiltersAndSort() {
+    List<RiskAssessment> tempAssessments = List.from(_allAssessments);
+
+    // 1. Filter by search query
+    if (_searchController.text.isNotEmpty) {
+      final query = _searchController.text.toLowerCase();
+      tempAssessments = tempAssessments
+          .where((assessment) =>
+              assessment.title.toLowerCase().contains(query) ||
+              assessment.details.toLowerCase().contains(query))
+          .toList();
+    }
+
+    // 2. Filter by status
+    if (_currentStatusFilter != null) {
+      tempAssessments = tempAssessments
+          .where((assessment) => assessment.status == _currentStatusFilter)
+          .toList();
+    }
+
+    // 3. Sort
+    tempAssessments.sort((a, b) {
+      switch (_currentSortOption) {
+        case RiskAssessmentSortOption.dateNewest:
+          return b.assessmentDate.compareTo(a.assessmentDate);
+        case RiskAssessmentSortOption.dateOldest:
+          return a.assessmentDate.compareTo(b.assessmentDate);
+        case RiskAssessmentSortOption.titleAsc:
+          return a.title.compareTo(b.title);
+      }
+    });
+
+    setState(() {
+      _filteredAndSortedAssessments = tempAssessments;
+    });
+  }
+
+  Future<void> _showAssessmentDialog({RiskAssessment? assessmentToEdit}) async {
+    final bool isEditing = assessmentToEdit != null;
+    final TextEditingController titleController = TextEditingController(text: assessmentToEdit?.title);
+    final TextEditingController detailsController = TextEditingController(text: assessmentToEdit?.details);
+    DateTime selectedDate = assessmentToEdit?.assessmentDate ?? DateTime.now();
+    RiskAssessmentStatus selectedStatus = assessmentToEdit?.status ?? RiskAssessmentStatus.open;
+
+    await showDialog(
       context: context,
-      builder: (_) => Dialog(
+      builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('New Risk Assessment',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _titleController,
-                  decoration: InputDecoration(
-                    labelText: 'Assessment Title',
-                    prefixIcon: const Icon(Icons.assignment),
-                    filled: true,
-                    fillColor: Colors.blue.shade50,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none),
-                  ),
+        title: Text(isEditing ? 'Edit Assessment' : 'New Risk Assessment', style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Assessment Title',
+                  prefixIcon: Icon(Icons.assignment),
+                  border: OutlineInputBorder(),
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _detailsController,
-                  maxLines: 4,
-                  decoration: InputDecoration(
-                    labelText: 'Details (Optional)',
-                    prefixIcon: const Icon(Icons.info_outline),
-                    filled: true,
-                    fillColor: Colors.blue.shade50,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none),
-                  ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: detailsController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Details (Optional)',
+                  prefixIcon: Icon(Icons.info_outline),
+                  border: OutlineInputBorder(),
                 ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-                    const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue.shade700,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+              ),
+              const SizedBox(height: 12),
+              // Use a stateful builder to update date in dialog without rebuilding page
+              StatefulBuilder(
+                builder: (BuildContext context, StateSetter setState2) {
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: Text('Date: ${DateFormat.yMMMd().format(selectedDate)}'),
                       ),
-                      onPressed: () {
-                        final title = _titleController.text.trim();
-                        if (title.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Assessment title is required'),
-                              backgroundColor: Colors.redAccent,
-                            ),
+                      IconButton(
+                        icon: const Icon(Icons.calendar_today),
+                        onPressed: () async {
+                          final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2101),
                           );
-                          return;
-                        }
+                          if (picked != null && picked != selectedDate) {
+                            setState2(() { // Use setState2 to update dialog's internal state
+                              selectedDate = picked;
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<RiskAssessmentStatus>(
+                value: selectedStatus,
+                decoration: const InputDecoration(
+                  labelText: 'Status',
+                  prefixIcon: Icon(Icons.check_circle_outline),
+                  border: OutlineInputBorder(),
+                ),
+                items: RiskAssessmentStatus.values.map((status) {
+                  return DropdownMenuItem(
+                    value: status,
+                    child: Text(status.nameString), // <--- Use .nameString here
+                  );
+                }).toList(),
+                onChanged: (RiskAssessmentStatus? newValue) {
+                  if (newValue != null) {
+                    setState(() { // This setState is for the page's state, but it might rebuild the dialog too.
+                                  // For a dialog, it's often better to use a StateSetter passed from StatefulBuilder
+                                  // if you want internal dialog state updates without closing/reopening.
+                                  // In this case, since the dialog might be re-opened for date, it's fine.
+                      selectedStatus = newValue;
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton.icon(
+            icon: Icon(isEditing ? Icons.save : Icons.add),
+            label: Text(isEditing ? 'Save' : 'Add'),
+            onPressed: () {
+              final title = titleController.text.trim();
+              if (title.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Assessment title is required'),
+                    backgroundColor: Colors.redAccent,
+                  ),
+                );
+                return;
+              }
 
-                        final newItem = {
-                          'title': title,
-                          'date': DateTime.now().toString().substring(0, 10),
-                          'status': 'Open',
-                          'details': _detailsController.text.trim(),
-                        };
+              if (isEditing) {
+                // Update existing assessment
+                setState(() {
+                  assessmentToEdit!.title = title;
+                  assessmentToEdit.details = detailsController.text.trim();
+                  assessmentToEdit.assessmentDate = selectedDate;
+                  assessmentToEdit.status = selectedStatus;
+                  _applyFiltersAndSort(); // Re-filter and sort
+                });
+              } else {
+                // Add new assessment
+                final newAssessment = RiskAssessment(
+                  title: title,
+                  details: detailsController.text.trim(),
+                  assessmentDate: selectedDate,
+                  status: selectedStatus,
+                );
+                setState(() {
+                  _allAssessments.insert(0, newAssessment); // Add to the top
+                  _applyFiltersAndSort(); // Re-filter and sort
+                });
+                _listKey.currentState?.insertItem(0, duration: const Duration(milliseconds: 500));
+              }
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                    content: Text(isEditing
+                        ? '"$title" updated successfully!'
+                        : '"$title" added successfully!')),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
-                        setState(() {
-                          _assessments.insert(0, newItem);
-                        });
-                        _listKey.currentState?.insertItem(0);
-                        Navigator.pop(context);
+  void _deleteAssessment(RiskAssessment assessment) {
+    final int index = _allAssessments.indexOf(assessment);
+    if (index != -1) {
+      final removedItem = _allAssessments.removeAt(index);
+      _listKey.currentState?.removeItem(
+        index,
+        (context, animation) => _buildAssessmentItem(context, removedItem, animation),
+        duration: const Duration(milliseconds: 500),
+      );
+      _applyFiltersAndSort(); // Re-filter and sort
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('"${removedItem.title}" deleted')),
+      );
+    }
+  }
+
+  Widget _buildAssessmentItem(BuildContext context, RiskAssessment item, Animation<double> animation) {
+    return SizeTransition(
+      sizeFactor: animation,
+      axisAlignment: -1.0,
+      child: Dismissible(
+        key: ValueKey(item.id),
+        direction: DismissDirection.endToStart,
+        background: Container(
+          color: Colors.red.shade600,
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: const Icon(Icons.delete, color: Colors.white, size: 36),
+        ),
+        confirmDismiss: (direction) async {
+          return await showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text("Confirm Delete"),
+                content: Text("Are you sure you want to delete '${item.title}'?"),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text("Cancel"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                    child: const Text("Delete", style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+        onDismissed: (direction) {
+          _deleteAssessment(item);
+        },
+        child: Card(
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 3,
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            title: Text(item.title,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                Text("Date: ${DateFormat.yMMMd().format(item.assessmentDate)}",
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+                if (item.details.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    item.details,
+                    style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: item.status.color.withOpacity(0.15), // <--- Use .color here
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(item.status.icon, // <--- Use .icon here
+                          color: item.status.color, size: 16), // <--- Use .color here
+                      const SizedBox(width: 6),
+                      Text(item.status.nameString, // <--- Use .nameString here
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: item.status.color, // <--- Use .color here
+                              fontSize: 12)),
+                    ],
+                  ),
+                ),
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      _showAssessmentDialog(assessmentToEdit: item);
+                    } else if (value == 'toggle_status') {
+                      setState(() {
+                        item.status = item.status == RiskAssessmentStatus.closed
+                            ? RiskAssessmentStatus.open
+                            : RiskAssessmentStatus.closed;
+                        _applyFiltersAndSort();
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(
+                                '"${item.title}" marked as ${item.status.nameString}.')),
+                      );
+                    } else if (value == 'delete') {
+                      _deleteAssessment(item);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem<String>(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit),
+                          SizedBox(width: 8),
+                          Text('Edit'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'toggle_status',
+                      child: Row(
+                        children: [
+                          Icon(item.status == RiskAssessmentStatus.closed
+                              ? Icons.lock_open
+                              : Icons.lock), // Could also use item.status.icon if you prefer
+                          const SizedBox(width: 8),
+                          Text(item.status == RiskAssessmentStatus.closed
+                              ? 'Mark Open'
+                              : 'Mark Closed'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Delete', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ],
+                  icon: const Icon(Icons.more_vert),
+                ),
+              ],
+            ),
+            onTap: () {
+              // Show full details dialog when tapping the list tile
+              showDialog(
+                context: context,
+                builder: (_) => AlertDialog(
+                  title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Date: ${DateFormat.yMMMd().format(item.assessmentDate)}'),
+                        const SizedBox(height: 8),
+                        Text('Status: ${item.status.nameString}', style: TextStyle(color: item.status.color, fontWeight: FontWeight.bold)), // <--- Use .nameString and .color here
+                        const SizedBox(height: 12),
+                        Text(item.details.isEmpty
+                            ? 'No additional details provided for this assessment.'
+                            : item.details),
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(context), child: const Text("Close")),
+                    TextButton.icon(
+                      icon: const Icon(Icons.edit),
+                      label: const Text('Edit'),
+                      onPressed: () {
+                        Navigator.pop(context); // Close details dialog
+                        _showAssessmentDialog(assessmentToEdit: item); // Open edit dialog
                       },
                     ),
                   ],
-                )
-              ],
-            ),
+                ),
+              );
+            },
           ),
         ),
       ),
     );
   }
 
-  Color _statusColor(String status) {
-    return switch (status.toLowerCase()) {
-      'open' => Colors.orange,
-      'closed' => Colors.green,
-      _ => Colors.grey,
-    };
-  }
-
-  IconData _statusIcon(String status) {
-    return switch (status.toLowerCase()) {
-      'open' => Icons.lock_open,
-      'closed' => Icons.lock,
-      _ => Icons.help_outline,
-    };
-  }
-
-  Widget _buildAssessmentItem(BuildContext context, int index, Animation<double> animation) {
-    final item = _assessments[index];
-
-    return SizeTransition(
-      sizeFactor: animation,
-      child: Card(
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        elevation: 3,
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          title: Text(item['title'],
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 4),
-              Text("Date: ${item['date']}",
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
-            ],
-          ),
-          trailing: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: _statusColor(item['status']).withOpacity(0.15),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(_statusIcon(item['status']),
-                    color: _statusColor(item['status']), size: 18),
-                const SizedBox(width: 6),
-                Text(item['status'],
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: _statusColor(item['status']),
-                        fontSize: 13)),
-              ],
-            ),
-          ),
-          onTap: () {
-            showDialog(
-              context: context,
-              builder: (_) => AlertDialog(
-                title: Text(item['title']),
-                content: Text(item['details'].toString().isEmpty
-                    ? 'No additional details.'
-                    : item['details']),
-                actions: [
-                  TextButton(onPressed: () => Navigator.pop(context), child: const Text("Close"))
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-    );
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -211,28 +477,153 @@ class _RiskAssessmentPageState extends State<RiskAssessmentPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Risk Assessment'),
-        backgroundColor: Colors.blue.shade700,
+        title: const Text('Risk Assessments', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.blue.shade800,
         elevation: 4,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(110),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _searchController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Search assessments...',
+                    hintStyle: const TextStyle(color: Colors.white70),
+                    prefixIcon: const Icon(Icons.search, color: Colors.white),
+                    filled: true,
+                    fillColor: Colors.blue.shade700,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, color: Colors.white70),
+                            onPressed: () {
+                              _searchController.clear();
+                              _applyFiltersAndSort();
+                            },
+                          )
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<RiskAssessmentStatus?>(
+                          value: _currentStatusFilter,
+                          style: const TextStyle(color: Colors.white),
+                          icon: const Icon(Icons.filter_list, color: Colors.white),
+                          dropdownColor: Colors.blue.shade700,
+                          onChanged: (RiskAssessmentStatus? newValue) {
+                            setState(() {
+                              _currentStatusFilter = newValue;
+                              _applyFiltersAndSort();
+                            });
+                          },
+                          items: [
+                            const DropdownMenuItem(
+                              value: null,
+                              child: Text('All Statuses', style: TextStyle(color: Colors.white)),
+                            ),
+                            ...RiskAssessmentStatus.values.map((status) {
+                              return DropdownMenuItem(
+                                value: status,
+                                child: Text(status.nameString, style: const TextStyle(color: Colors.white)), // <--- Use .nameString here
+                              );
+                            }).toList(),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<RiskAssessmentSortOption>(
+                          value: _currentSortOption,
+                          style: const TextStyle(color: Colors.white),
+                          icon: const Icon(Icons.sort, color: Colors.white),
+                          dropdownColor: Colors.blue.shade700,
+                          onChanged: (RiskAssessmentSortOption? newValue) {
+                            setState(() {
+                              _currentSortOption = newValue!;
+                              _applyFiltersAndSort();
+                            });
+                          },
+                          items: RiskAssessmentSortOption.values.map((sortOption) {
+                            String text;
+                            switch (sortOption) {
+                              case RiskAssessmentSortOption.dateNewest:
+                                text = 'Date (Newest)';
+                                break;
+                              case RiskAssessmentSortOption.dateOldest:
+                                text = 'Date (Oldest)';
+                                break;
+                              case RiskAssessmentSortOption.titleAsc:
+                                text = 'Title (A-Z)';
+                                break;
+                            }
+                            return DropdownMenuItem<RiskAssessmentSortOption>(
+                              value: sortOption,
+                              child: Text(text, style: const TextStyle(color: Colors.white)),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
-      body: _assessments.isEmpty
+      body: _filteredAndSortedAssessments.isEmpty
           ? Center(
-              child: Text('No assessments found.',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 16)))
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.assessment, size: 80, color: Colors.grey.shade400),
+                  const SizedBox(height: 16),
+                  Text(
+                    _searchController.text.isEmpty && _currentStatusFilter == null
+                        ? 'No risk assessments recorded yet.'
+                        : 'No matching assessments found.',
+                    style: theme.textTheme.titleLarge?.copyWith(color: Colors.grey.shade600),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tap the "+" button to add a new assessment.',
+                    style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey.shade500),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            )
           : AnimatedList(
               key: _listKey,
-              initialItemCount: _assessments.length,
+              initialItemCount: _filteredAndSortedAssessments.length,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-              itemBuilder: _buildAssessmentItem,
+              itemBuilder: (context, index, animation) {
+                return _buildAssessmentItem(context, _filteredAndSortedAssessments[index], animation);
+              },
             ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openAddDialog,
+        onPressed: () => _showAssessmentDialog(),
         icon: const Icon(Icons.add),
         label: const Text("New Assessment"),
         backgroundColor: theme.colorScheme.primary,
+        foregroundColor: Colors.white,
         elevation: 5,
       ),
-       bottomNavigationBar: const QuickAccessBar(currentLabel: 'Risk'),
+      bottomNavigationBar: const QuickAccessBar(currentLabel: 'Risk'),
     );
   }
 }

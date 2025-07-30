@@ -49,7 +49,7 @@ class MyApp extends StatelessWidget {
         '/analytics': (context) => const AnalyticsPage(),
         '/virtualization': (context) => const VirtualizationPage(),
         '/safety': (context) => const SafetySheetsPage(),
-        '/emergency': (context) => const EmergencyPage(),
+        '/emergency': (context) => const EmergencyContactsPage(),
         '/safety-talks': (context) => const SafetyTalksPage(),
         '/calendar': (context) => const CalendarPage(),
       },
