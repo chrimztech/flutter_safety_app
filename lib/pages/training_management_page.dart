@@ -1,9 +1,9 @@
 // pages/training_management_page.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:uuid/uuid.dart'; // Add uuid package to pubspec.yaml
-import '../models/training_model.dart'; // Import your new Training model
-import '../pages/quickaccess_bar.dart'; // Assuming this is in the parent directory
+import 'package:uuid/uuid.dart';
+import '../models/training_model.dart';
+import '../pages/quickaccess_bar.dart';
 
 class TrainingManagementPage extends StatefulWidget {
   const TrainingManagementPage({super.key});
@@ -15,17 +15,17 @@ class TrainingManagementPage extends StatefulWidget {
 enum TrainingFilter { all, upcoming, completed, overdue, missed, scheduled }
 
 class _TrainingManagementPageState extends State<TrainingManagementPage> {
-  final List<Training> _trainings = []; // Use the Training model
+  final List<Training> _trainings = [];
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _assignedToController = TextEditingController();
-  final Uuid _uuid = const Uuid(); // For generating unique IDs
+  final Uuid _uuid = const Uuid();
 
   DateTime? _selectedDate;
   String _searchQuery = '';
   TrainingFilter _currentFilter = TrainingFilter.all;
 
-  String _selectedTrainingType = 'General'; // Default type for new training
+  String _selectedTrainingType = 'General';
   final List<String> _trainingTypes = [
     'General',
     'Fire Safety',
@@ -44,7 +44,6 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
   }
 
   void _initializeMockData() {
-    // Current time in Lusaka, Zambia
     final nowLusaka = DateTime.now();
 
     _trainings.addAll([
@@ -61,8 +60,8 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
           title: 'Hazardous Waste Disposal',
           date: nowLusaka.subtract(const Duration(days: 10)),
           description: 'Refresher course on proper disposal of hazardous waste.',
-          type: 'Waste Management',
-          assignedTo: 'Waste Management Team',
+          type: 'Waste',
+          assignedTo: 'Waste Management',
           status: TrainingStatus.completed),
       Training(
           id: _uuid.v4(),
@@ -70,21 +69,22 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
           date: nowLusaka.subtract(const Duration(days: 5)),
           description: 'Mandatory session on Personal Protective Equipment.',
           type: 'General',
-          assignedTo: 'All Production Staff',
-          status: TrainingStatus.overdue), // Manually set as overdue for mock
+          assignedTo: 'Production Staff',
+          status: TrainingStatus.overdue),
       Training(
           id: _uuid.v4(),
           title: 'Spill Containment Protocol',
           date: nowLusaka.add(const Duration(days: 1)),
           description: 'Hands-on training for chemical spill containment.',
-          type: 'Chemical Handling',
-          assignedTo: 'Chemical Handling Team',
-          status: TrainingStatus.upcoming), // Manually set as upcoming for mock
+          type: 'Chemical',
+          assignedTo: 'Handling Team',
+          status: TrainingStatus.upcoming),
       Training(
           id: _uuid.v4(),
           title: 'Fire Extinguisher Use',
           date: nowLusaka.subtract(const Duration(days: 30)),
-          description: 'Annual training on different types of fire extinguishers.',
+          description:
+              'Annual training on different types of fire extinguishers.',
           type: 'Fire Safety',
           assignedTo: 'All Staff',
           status: TrainingStatus.completed),
@@ -92,7 +92,8 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
           id: _uuid.v4(),
           title: 'Confined Space Entry',
           date: nowLusaka.add(const Duration(days: 45)),
-          description: 'Specialized training for confined space entry procedures.',
+          description:
+              'Specialized training for confined space entry procedures.',
           type: 'Machine Operation',
           assignedTo: 'Maintenance Team',
           status: TrainingStatus.scheduled),
@@ -100,13 +101,12 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
           id: _uuid.v4(),
           title: 'Environmental Audit Procedures',
           date: nowLusaka.subtract(const Duration(days: 60)),
-          description: 'Understanding internal and external environmental audit processes.',
-          type: 'Environmental Compliance',
-          assignedTo: 'EHS Department',
-          status: TrainingStatus.missed), // Example of a missed training
+          description:
+              'Understanding internal and external environmental audit processes.',
+          type: 'Compliance',
+          assignedTo: 'EHS',
+          status: TrainingStatus.missed),
     ]);
-
-    // Update initial statuses based on their dates (for actual scheduled/upcoming/overdue)
     _updateAllTrainingStatuses();
   }
 
@@ -115,13 +115,12 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
       for (var training in _trainings) {
         training.updateStatusBasedOnDate();
       }
-      _sortTrainings(); // Sort after status update
+      _sortTrainings();
     });
   }
 
   void _sortTrainings() {
     _trainings.sort((a, b) {
-      // Prioritize overdue/upcoming/scheduled first, then completed/missed
       int statusOrder(TrainingStatus status) {
         if (status == TrainingStatus.overdue) return 0;
         if (status == TrainingStatus.upcoming) return 1;
@@ -130,14 +129,14 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
         if (status == TrainingStatus.completed) return 4;
         return 5;
       }
-      int statusComparison = statusOrder(a.status).compareTo(statusOrder(b.status));
+
+      int statusComparison =
+          statusOrder(a.status).compareTo(statusOrder(b.status));
       if (statusComparison != 0) return statusComparison;
 
-      // Then by date (earliest first)
       return a.date.compareTo(b.date);
     });
   }
-
 
   @override
   void dispose() {
@@ -203,7 +202,6 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                   );
                   if (picked != null) {
                     setState(() => _selectedDate = picked);
-                    // Update the state of the dialog immediately
                     (context as Element).markNeedsBuild();
                   }
                 },
@@ -232,7 +230,6 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                 onChanged: (String? newValue) {
                   setState(() {
                     _selectedTrainingType = newValue!;
-                    // Update the state of the dialog immediately
                     (context as Element).markNeedsBuild();
                   });
                 },
@@ -265,7 +262,7 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                   trainingToEdit.description = description;
                   trainingToEdit.assignedTo = assignedTo;
                   trainingToEdit.type = _selectedTrainingType;
-                  trainingToEdit.updateStatusBasedOnDate(); // Recalculate status
+                  trainingToEdit.updateStatusBasedOnDate();
                 } else {
                   final newTraining = Training(
                     id: _uuid.v4(),
@@ -275,15 +272,16 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                     assignedTo: assignedTo,
                     type: _selectedTrainingType,
                   );
-                  newTraining.updateStatusBasedOnDate(); // Set initial status based on date
-                  _trainings.insert(0, newTraining); // Add to top
+                  newTraining.updateStatusBasedOnDate();
+                  _trainings.insert(0, newTraining);
                 }
-                _sortTrainings(); // Re-sort after adding/editing
+                _sortTrainings();
               });
 
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(isEditing ? 'Training updated!' : 'Training added!')),
+                SnackBar(
+                    content: Text(isEditing ? 'Training updated!' : 'Training added!')),
               );
             },
             child: Text(isEditing ? 'Save' : 'Add'),
@@ -299,7 +297,8 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Delete Training?'),
-        content: Text('Are you sure you want to delete "${training.title}"? This action cannot be undone.'),
+        content: Text(
+            'Are you sure you want to delete "${training.title}"? This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -343,20 +342,19 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Apply filter and search query
     List<Training> filteredTrainings = _trainings.where((training) {
-      bool matchesSearch = training.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                           training.description.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                           training.assignedTo.toLowerCase().contains(_searchQuery.toLowerCase());
+      bool matchesSearch =
+          training.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+              training.description.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+              training.assignedTo.toLowerCase().contains(_searchQuery.toLowerCase());
 
       bool matchesFilter = true;
       if (_currentFilter != TrainingFilter.all) {
-        matchesFilter = training.status == _currentFilter;
+        matchesFilter = training.status.name == _currentFilter.name;
       }
 
       return matchesSearch && matchesFilter;
@@ -364,7 +362,8 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Training Management', style: TextStyle(color: Colors.white)),
+        title: const Text('Training Management',
+            style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blue.shade800,
         elevation: 4,
         actions: [
@@ -381,7 +380,7 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
           ),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(110), // Increased height for search and filters
+          preferredSize: const Size.fromHeight(110),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Column(
@@ -395,7 +394,8 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                     prefixIcon: const Icon(Icons.search, color: Colors.white),
                     filled: true,
                     fillColor: Colors.blue.shade700,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                    contentPadding:
+                        const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide.none,
@@ -407,8 +407,6 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                               setState(() {
                                 _searchQuery = '';
                               });
-                              // To clear the TextField visually, you'd need a TextEditingController.
-                              // For now, it will clear when you type next or if you manually clear it.
                             },
                           )
                         : null,
@@ -427,12 +425,13 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                           onSelected: (selected) {
                             setState(() {
                               _currentFilter = selected ? filter : TrainingFilter.all;
-                              _updateAllTrainingStatuses(); // Re-evaluate statuses if date changes
+                              _updateAllTrainingStatuses();
                             });
                           },
                           selectedColor: theme.colorScheme.secondary,
                           labelStyle: TextStyle(
-                            color: _currentFilter == filter ? Colors.white : theme.colorScheme.primary,
+                            color:
+                                _currentFilter == filter ? Colors.white : theme.colorScheme.primary,
                             fontWeight: FontWeight.w500,
                           ),
                           backgroundColor: Colors.blue.shade100,
@@ -451,13 +450,16 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.calendar_month, size: 80, color: Colors.grey.shade400),
+                  Icon(Icons.calendar_month,
+                      size: 80, color: Colors.grey.shade400),
                   const SizedBox(height: 16),
                   Text(
                     _searchQuery.isEmpty && _currentFilter == TrainingFilter.all
                         ? 'No training sessions added yet.'
                         : 'No matching training sessions found.',
-                    style: theme.textTheme.titleLarge?.copyWith(color: Colors.grey.shade600),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
@@ -465,7 +467,9 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                     _searchQuery.isEmpty && _currentFilter == TrainingFilter.all
                         ? 'Tap the "+" button to add your first training.'
                         : 'Try adjusting your search or filter.',
-                    style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey.shade500),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey.shade500,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -477,7 +481,7 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
               itemBuilder: (context, index) {
                 final training = filteredTrainings[index];
                 return Dismissible(
-                  key: ValueKey(training.id), // Unique key for Dismissible
+                  key: ValueKey(training.id),
                   direction: DismissDirection.endToStart,
                   background: Container(
                     color: Colors.red.shade600,
@@ -491,7 +495,8 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                       builder: (BuildContext context) {
                         return AlertDialog(
                           title: const Text("Confirm Delete"),
-                          content: Text("Are you sure you want to delete '${training.title}'?"),
+                          content:
+                              Text("Are you sure you want to delete '${training.title}'?"),
                           actions: <Widget>[
                             TextButton(
                               onPressed: () => Navigator.of(context).pop(false),
@@ -499,8 +504,10 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                             ),
                             ElevatedButton(
                               onPressed: () => Navigator.of(context).pop(true),
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                              child: const Text("Delete", style: TextStyle(color: Colors.white)),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red),
+                              child: const Text("Delete",
+                                  style: TextStyle(color: Colors.white)),
                             ),
                           ],
                         );
@@ -521,7 +528,7 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                       side: BorderSide(
-                        color: training.status.color.withOpacity(0.5), // Subtle border based on status
+                        color: training.status.color.withOpacity(0.5),
                         width: 1,
                       ),
                     ),
@@ -533,8 +540,10 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(training.status.icon, color: training.status.color, size: 28),
+                                Icon(training.status.icon,
+                                    color: training.status.color, size: 28),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
@@ -548,19 +557,23 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                // Display status badge
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: training.status.color.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    training.status.displayName,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: training.status.color,
-                                      fontWeight: FontWeight.w600,
+                                // This Flexible widget prevents overflow
+                                Flexible(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          training.status.color.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      training.status.displayName,
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: training.status.color,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ),
@@ -587,22 +600,27 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                             const SizedBox(height: 8),
                             Row(
                               children: [
-                                Icon(Icons.category, size: 18, color: Colors.grey.shade500),
+                                Icon(Icons.category,
+                                    size: 18, color: Colors.grey.shade500),
                                 const SizedBox(width: 4),
                                 Text(
                                   training.type,
-                                  style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                      color: Colors.grey.shade600),
                                 ),
                                 const SizedBox(width: 12),
-                                Icon(Icons.group, size: 18, color: Colors.grey.shade500),
+                                Icon(Icons.group,
+                                    size: 18, color: Colors.grey.shade500),
                                 const SizedBox(width: 4),
                                 Text(
                                   training.assignedTo,
-                                  style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                      color: Colors.grey.shade600),
                                 ),
                               ],
                             ),
-                            if (training.status != TrainingStatus.completed && training.status != TrainingStatus.missed)
+                            if (training.status != TrainingStatus.completed &&
+                                training.status != TrainingStatus.missed)
                               Align(
                                 alignment: Alignment.bottomRight,
                                 child: Padding(
@@ -611,26 +629,34 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       ElevatedButton.icon(
-                                        onPressed: () => _markTrainingAsCompleted(training),
+                                        onPressed: () =>
+                                            _markTrainingAsCompleted(training),
                                         icon: const Icon(Icons.check, size: 18),
                                         label: const Text('Complete'),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.green.shade600,
                                           foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8)),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 6),
                                         ),
                                       ),
                                       const SizedBox(width: 8),
                                       ElevatedButton.icon(
-                                        onPressed: () => _markTrainingAsMissed(training),
+                                        onPressed: () =>
+                                            _markTrainingAsMissed(training),
                                         icon: const Icon(Icons.close, size: 18),
                                         label: const Text('Missed'),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.red.shade600,
                                           foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8)),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 6),
                                         ),
                                       ),
                                     ],
@@ -646,20 +672,19 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
               },
             ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openAddEditDialog, // Use combined dialog
+        onPressed: _openAddEditDialog,
         icon: const Icon(Icons.add),
         label: const Text('Add Training'),
         backgroundColor: theme.colorScheme.primary,
-        foregroundColor: Colors.white, // Ensure icon and text are white
+        foregroundColor: Colors.white,
       ),
       bottomNavigationBar: const QuickAccessBar(currentLabel: 'Training'),
     );
   }
 }
-
-// Utility extension for string capitalization
 extension StringExtension on String {
-    String capitalize() {
-      return "${this[0].toUpperCase()}${substring(1).toLowerCase()}";
-    }
+  String capitalize() {
+    if (isEmpty) return this;
+    return "${this[0].toUpperCase()}${substring(1).toLowerCase()}";
+  }
 }

@@ -27,7 +27,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class DashboardPageState extends State<DashboardPage> {
-  final String _userName = "Chrishent Matakala"; // Updated username for consistency
+  final String _userName = "Chrishent Matakala";
 
   List<Map<String, String>> calendarEvents = [
     {
@@ -59,7 +59,6 @@ class DashboardPageState extends State<DashboardPage> {
     try {
       formattedDate = DateFormat.yMMMMd().format(DateTime.parse(event["date"]!));
     } catch (_) {
-      // Fallback if date parsing fails
       formattedDate = "Unknown Date";
     }
 
@@ -67,7 +66,7 @@ class DashboardPageState extends State<DashboardPage> {
       margin: const EdgeInsets.symmetric(vertical: 8),
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      clipBehavior: Clip.antiAlias, // Ensures inkwell ripple respects border radius
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CalendarPage())),
         borderRadius: BorderRadius.circular(16),
@@ -125,7 +124,7 @@ class DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildGridItem(String label, IconData icon, Widget page) {
+  Widget _buildGridItem(String label, IconData icon, Widget page, List<Color> colors) {
     return Card(
       elevation: 6,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -135,12 +134,8 @@ class DashboardPageState extends State<DashboardPage> {
         borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(
-            // Changed to blue gradient
             gradient: LinearGradient(
-              colors: [
-                Colors.blue.shade600, // Start blue
-                Colors.blue.shade800, // End blue
-              ],
+              colors: colors,
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -158,17 +153,20 @@ class DashboardPageState extends State<DashboardPage> {
                 child: Icon(icon, size: 32, color: Colors.white),
               ),
               const SizedBox(height: 10),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    fontSize: 14,
+              // Wrapped text in Expanded and FittedBox to prevent overflow
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      fontSize: 16, // Starting font size, will scale down if needed
+                    ),
                   ),
                 ),
               ),
@@ -181,15 +179,15 @@ class DashboardPageState extends State<DashboardPage> {
 
   Widget _buildGridAccessCard(BuildContext context) {
     final gridItems = [
-      {"icon": Icons.record_voice_over, "label": "Safety Talks", "page": const SafetyTalksPage()},
-      {"icon": Icons.analytics, "label": "Analytics", "page": const AnalyticsPage()},
-      {"icon": Icons.dangerous, "label": "Hazard Detection", "page": const HazardDetectionPage()},
-      {"icon": Icons.safety_check, "label": "Safety Sheets", "page": const SafetySheetsPage()},
-      {"icon": Icons.calendar_today, "label": "Calendar", "page": const CalendarPage()},
-      {"icon": Icons.report_problem, "label": "Incident Reporting", "page": const IncidentReportingPage()},
-      {"icon": Icons.memory, "label": "Virtualization", "page": const VirtualizationPage()},
-      {"icon": Icons.contact_phone, "label": "Emergency", "page": const EmergencyContactsPage()},
-      {"icon": Icons.person, "label": "Profile", "page": const UserProfilePage()},
+      {"icon": Icons.record_voice_over, "label": "Safety Talks", "page": const SafetyTalksPage(), "colors": [Colors.blue.shade600, Colors.blue.shade800]},
+      {"icon": Icons.analytics, "label": "Analytics", "page": const AnalyticsPage(), "colors": [Colors.green.shade600, Colors.green.shade800]},
+      {"icon": Icons.dangerous, "label": "Hazard Detection", "page": const HazardDetectionPage(), "colors": [Colors.orange.shade600, Colors.orange.shade800]},
+      {"icon": Icons.safety_check, "label": "Safety Sheets", "page": const SafetySheetsPage(), "colors": [Colors.purple.shade600, Colors.purple.shade800]},
+      {"icon": Icons.calendar_today, "label": "Calendar", "page": const CalendarPage(), "colors": [Colors.red.shade600, Colors.red.shade800]},
+      {"icon": Icons.report_problem, "label": "Incident Reporting", "page": const IncidentReportingPage(), "colors": [Colors.teal.shade600, Colors.teal.shade800]},
+      {"icon": Icons.memory, "label": "Virtualization", "page": const VirtualizationPage(), "colors": [Colors.indigo.shade600, Colors.indigo.shade800]},
+      {"icon": Icons.contact_phone, "label": "Emergency", "page": const EmergencyContactsPage(), "colors": [Colors.deepOrange.shade600, Colors.deepOrange.shade800]},
+      {"icon": Icons.person, "label": "Profile", "page": const UserProfilePage(), "colors": [Colors.cyan.shade600, Colors.cyan.shade800]},
     ];
 
     return Padding(
@@ -200,13 +198,18 @@ class DashboardPageState extends State<DashboardPage> {
         itemCount: gridItems.length,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
-          mainAxisSpacing: 18,
-          crossAxisSpacing: 18,
-          childAspectRatio: 0.95,
+          mainAxisSpacing: 14,
+          crossAxisSpacing: 14,
+          childAspectRatio: 1.1, // Increased aspect ratio to provide more vertical space
         ),
         itemBuilder: (context, index) {
           final item = gridItems[index];
-          return _buildGridItem(item['label'] as String, item['icon'] as IconData, item['page'] as Widget);
+          return _buildGridItem(
+            item['label'] as String,
+            item['icon'] as IconData,
+            item['page'] as Widget,
+            item['colors'] as List<Color>,
+          );
         },
       ),
     );
@@ -214,15 +217,14 @@ class DashboardPageState extends State<DashboardPage> {
 
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
-      // AppBar is now transparent with a subtle gradient for visual flair, not solid blue
       backgroundColor: Colors.blue,
-      elevation: 0, // No shadow for a flat look
+      elevation: 0,
       flexibleSpace: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Theme.of(context).colorScheme.primary.withOpacity(0.8), // Primary color with opacity
-              Theme.of(context).colorScheme.primary.withOpacity(0.6), // Lighter primary color with opacity
+              Theme.of(context).colorScheme.primary.withOpacity(0.8),
+              Theme.of(context).colorScheme.primary.withOpacity(0.6),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -237,9 +239,8 @@ class DashboardPageState extends State<DashboardPage> {
           ],
         ),
       ),
-      // Only the profile icon and drawer icon remain in the AppBar
       title: const Text(
-        'Dashboard', // A simple title for the AppBar
+        'Dashboard',
         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
       ),
       centerTitle: true,
@@ -272,7 +273,6 @@ class DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  // Modified _buildDrawer to accept currentRouteLabel
   Widget _buildDrawer(BuildContext context, String currentRouteLabel) {
     final drawerItems = [
       {"label": "Home", "icon": Icons.home, "page": const DashboardPage()},
@@ -292,37 +292,50 @@ class DashboardPageState extends State<DashboardPage> {
     return Drawer(
       child: Column(
         children: [
-          // In _buildDrawer method
-DrawerHeader(
-  // Removed margin: EdgeInsets.zero and padding: EdgeInsets.zero
-  decoration: BoxDecoration(
-    gradient: LinearGradient(
-      colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.tertiary],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    ),
-  ),
-  child: Column( // Directly put Column here, or keep Container with adjusted padding
-    mainAxisAlignment: MainAxisAlignment.end, // Keeps content at the bottom
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      CircleAvatar(
-        radius: 30,
-        backgroundColor: Colors.white,
-        child: Icon(Icons.shield, size: 40, color: Theme.of(context).colorScheme.primary),
-      ),
-      const SizedBox(height: 12),
-      const Text(
-        "Environmental Safety App",
-        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-      ),
-      const Text(
-        "Your safety companion",
-        style: TextStyle(color: Colors.white70, fontSize: 13),
-      ),
-    ],
-  ),
-),
+          SizedBox(
+            height: 200, // Explicitly set height for the header
+            child: Stack(
+              children: [
+                // Background gradient
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.tertiary],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                  ),
+                ),
+                // Content (Logo and text)
+                Positioned(
+                  bottom: 16,
+                  left: 16,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Colors.white,
+                        // Using backgroundImage is the correct way to display an image in CircleAvatar
+                        backgroundImage: const AssetImage('assets/logo.png'),
+                        onBackgroundImageError: (exception, stackTrace) {
+                          // This helps debug if the image path is wrong
+                          print('Failed to load logo: $exception');
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        "Chomene OHSE App",
+                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
@@ -334,40 +347,10 @@ DrawerHeader(
                         Navigator.pop(context);
                         Navigator.push(context, MaterialPageRoute(builder: (_) => item['page'] as Widget));
                       },
-                      // Corrected: Compare item['label'] with the passed currentRouteLabel
                       selected: item['label'] == currentRouteLabel,
                       selectedTileColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                       selectedColor: Theme.of(context).colorScheme.primary,
                     )),
-                const Divider(),
-                ListTile(
-                  leading: Icon(Icons.person, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  title: const Text('Profile', style: TextStyle(fontWeight: FontWeight.w600)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const UserProfilePage()));
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.settings, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.w600)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage()));
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
-                  title: Text('Logout', style: TextStyle(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.error)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => const LoginPage()),
-                      (route) => false,
-                    );
-                  },
-                ),
               ],
             ),
           ),
@@ -381,12 +364,11 @@ DrawerHeader(
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      extendBodyBehindAppBar: true, // Allows body to extend behind the AppBar
+      extendBodyBehindAppBar: true,
       appBar: _buildAppBar(context),
       drawer: _buildDrawer(context, 'Home'),
       body: Stack(
         children: [
-          // Background gradient for the entire screen
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -397,12 +379,10 @@ DrawerHeader(
             ),
           ),
           SingleChildScrollView(
-            // Adjusted padding to account for the AppBar height and the new greeting section
             padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + kToolbarHeight + 20, 20, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Moved Greeting and Username here, below the AppBar
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -422,13 +402,9 @@ DrawerHeader(
                     ),
                   ],
                 ),
-                const SizedBox(height: 24), // Space between greeting and grid
-
-                // Grid Access Card
+                const SizedBox(height: 24),
                 _buildGridAccessCard(context),
                 const SizedBox(height: 30),
-
-                // Upcoming Events Section
                 Text(
                   "Upcoming Events",
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(

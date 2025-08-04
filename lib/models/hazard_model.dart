@@ -1,77 +1,78 @@
 // models/hazard_model.dart
-// models/hazard_model.dart (create this new file)
+// models/hazard_model.dart
 import 'package:flutter/material.dart';
 
+// Enum to represent the risk level of a hazard
 enum HazardRisk {
-  low,
-  moderate,
+  critical,
   high,
-  critical, // Added critical for more severity
+  moderate,
+  low,
 }
 
+// Extension to add properties to the HazardRisk enum
 extension HazardRiskExtension on HazardRisk {
+  String get displayName {
+    switch (this) {
+      case HazardRisk.critical:
+        return 'Critical';
+      case HazardRisk.high:
+        return 'High';
+      case HazardRisk.moderate:
+        return 'Moderate';
+      case HazardRisk.low:
+      default:
+        return 'Low';
+    }
+  }
+
   Color get color {
     switch (this) {
-      case HazardRisk.low:
-        return Colors.green;
-      case HazardRisk.moderate:
-        return Colors.orange;
-      case HazardRisk.high:
-        return Colors.red;
       case HazardRisk.critical:
-        return Colors.red.shade900; // Even darker red for critical
+        return Colors.red.shade800;
+      case HazardRisk.high:
+        return Colors.orange.shade800;
+      case HazardRisk.moderate:
+        return Colors.yellow.shade800;
+      case HazardRisk.low:
+      default:
+        return Colors.green.shade700;
     }
   }
 
   IconData get icon {
     switch (this) {
-      case HazardRisk.low:
-        return Icons.check_circle_outline;
-      case HazardRisk.moderate:
-        return Icons.warning_amber_outlined;
-      case HazardRisk.high:
-        return Icons.error_outline;
       case HazardRisk.critical:
-        return Icons.crisis_alert; // A more urgent icon
+        return Icons.warning_rounded;
+      case HazardRisk.high:
+        return Icons.warning_rounded;
+      case HazardRisk.moderate:
+        return Icons.info_rounded;
+      case HazardRisk.low:
+      default:
+        return Icons.check_circle_rounded;
     }
-  }
-
-  String get displayName {
-    return name[0].toUpperCase() + name.substring(1);
   }
 }
 
+// Model for a single hazard category
+class HazardCategory {
+  final String name;
+  final IconData icon;
+  final Color color;
+
+  HazardCategory({required this.name, required this.icon, required this.color});
+}
+
+// Main model for a detected hazard
 class Hazard {
   final String name;
   final double? currentValue;
-  final String? unit; // e.g., '°C', '%', 'ppm'
-  final double? highThreshold; // Value above which it's high
-  final double? criticalThreshold; // Value above which it's critical
+  final String? unit;
+  final double? highThreshold;
+  final double? criticalThreshold;
   final String category;
   final DateTime detectedAt;
-
-  HazardRisk get risk {
-    if (currentValue == null) {
-      // For hazards like 'Toxic Spill', 'Fire Outbreak' which are binary
-      // We assume they are high/critical if they exist in the list.
-      // This logic can be refined if you have a separate 'is_active' flag.
-      if (name == 'Fire Outbreak' || name == 'Toxic Leak' || name == 'Toxic Spill') {
-        return HazardRisk.critical; // Treat these as critical if they appear
-      }
-      return HazardRisk.high; // Default for non-quantifiable but present hazards
-    }
-
-    if (criticalThreshold != null && currentValue! >= criticalThreshold!) {
-      return HazardRisk.critical;
-    }
-    if (highThreshold != null && currentValue! >= highThreshold!) {
-      return HazardRisk.high;
-    }
-    if (highThreshold != null && currentValue! >= highThreshold! * 0.75) { // Moderate if approaching high
-      return HazardRisk.moderate;
-    }
-    return HazardRisk.low;
-  }
 
   Hazard({
     required this.name,
@@ -82,13 +83,26 @@ class Hazard {
     required this.category,
     required this.detectedAt,
   });
-}
 
-// Data for hazard categories
-class HazardCategory {
-  final String name;
-  final IconData icon; // Icon for the category
-  final Color color; // Color for the category
-
-  HazardCategory({required this.name, required this.icon, required this.color});
+  // A getter to compute the risk level based on thresholds
+  HazardRisk get risk {
+    if (currentValue == null) {
+      // For binary hazards like a "Fire Outbreak"
+      return HazardRisk.critical;
+    }
+    if (criticalThreshold != null && currentValue! >= criticalThreshold!) {
+      return HazardRisk.critical;
+    }
+    if (highThreshold != null && currentValue! >= highThreshold!) {
+      return HazardRisk.high;
+    }
+    // Special case for low oxygen being critical
+    if (name == 'Oxygen Level' && currentValue! < (criticalThreshold ?? 19.5)) {
+      return HazardRisk.critical;
+    }
+    if (name == 'Oxygen Level' && currentValue! < (highThreshold ?? 21.0)) {
+      return HazardRisk.high;
+    }
+    return HazardRisk.low;
+  }
 }

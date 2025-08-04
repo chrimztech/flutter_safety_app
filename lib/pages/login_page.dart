@@ -78,12 +78,14 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center, // Vertically center content
                 crossAxisAlignment: CrossAxisAlignment.stretch, // Stretch children horizontally
                 children: [
-                  // App Logo/Icon
-                  Icon(
-                    Icons.eco_outlined, // A relevant icon for environmental app
-                    size: 100,
-                    color: theme.colorScheme.primary,
+                  // App Logo
+                  Image.asset(
+                    'assets/logo.jpg',
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.contain,
                   ),
+
                   const SizedBox(height: 16),
                   Text(
                     'Welcome Back!',

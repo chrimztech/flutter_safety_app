@@ -16,6 +16,7 @@ class HazardDetectionPage extends StatefulWidget {
 class _HazardDetectionPageState extends State<HazardDetectionPage> {
   bool _isLoading = false;
   String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
   Timer? _dataRefreshTimer; // For automatic refresh
 
   // Categories definition
@@ -39,6 +40,7 @@ class _HazardDetectionPageState extends State<HazardDetectionPage> {
   @override
   void dispose() {
     _dataRefreshTimer?.cancel(); // Cancel timer when page is disposed
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -149,7 +151,7 @@ class _HazardDetectionPageState extends State<HazardDetectionPage> {
           if (newValue < 0) newValue = 0; // Prevent negative values
 
           // Simulate a critical spike occasionally for a few hazards
-          if (random.nextDouble() < 0.05 && (hazard.name == 'Temperature' || hazard.name == 'Particulate Matter (PM2.5)')) {
+          if (random.nextDouble() < 0.05 && (hazard.name == 'Air Temp.' || hazard.name == 'Particulate Matter (PM2.5)')) {
             newValue = (hazard.criticalThreshold ?? (hazard.highThreshold! * 1.5)) * (1 + random.nextDouble() * 0.1);
           }
 
@@ -163,9 +165,9 @@ class _HazardDetectionPageState extends State<HazardDetectionPage> {
             detectedAt: DateTime.now(),
           );
         } else {
-          // For binary hazards like 'Toxic Spill', 'Fire Outbreak'
+          // For binary hazards like 'Chemical Leak' or 'Fire Outbreak'
           // Simulate them appearing/disappearing occasionally
-          if (random.nextDouble() < 0.02 && (hazard.name == 'Toxic Spill' || hazard.name == 'Fire Outbreak')) {
+          if (random.nextDouble() < 0.02 && (hazard.name == 'Chemical Leak' || hazard.name == 'Fire Outbreak')) {
              return Hazard( // Create a new instance to update detectedAt
               name: hazard.name,
               currentValue: null,
@@ -187,7 +189,7 @@ class _HazardDetectionPageState extends State<HazardDetectionPage> {
         ));
       }
       // Clean up old critical events occasionally (e.g., if resolved)
-      _liveHazards.removeWhere((h) => (h.name == 'Toxic Leak' || h.name == 'Fire Outbreak' || h.name == 'Toxic Spill') && random.nextDouble() < 0.1);
+      _liveHazards.removeWhere((h) => (h.name == 'Toxic Leak' || h.name == 'Fire Outbreak' || h.name == 'Chemical Leak') && random.nextDouble() < 0.1);
 
 
       // Re-sort hazards by risk level after update
@@ -273,11 +275,12 @@ class _HazardDetectionPageState extends State<HazardDetectionPage> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: TextField(
+              controller: _searchController,
               onChanged: (val) => setState(() => _searchQuery = val),
               style: const TextStyle(color: Colors.white), // Text color for input
               decoration: InputDecoration(
                 hintText: 'Search hazards...',
-                hintStyle: TextStyle(color: Colors.white70),
+                hintStyle: const TextStyle(color: Colors.white70),
                 prefixIcon: const Icon(Icons.search, color: Colors.white),
                 filled: true,
                 fillColor: Colors.blue.shade700, // Darker blue for search bar
@@ -290,11 +293,10 @@ class _HazardDetectionPageState extends State<HazardDetectionPage> {
                     ? IconButton(
                         icon: const Icon(Icons.clear, color: Colors.white70),
                         onPressed: () {
+                          _searchController.clear();
                           setState(() {
                             _searchQuery = '';
                           });
-                          // Clear the text field content (requires a TextEditingController)
-                          // For simplicity, we're not adding a controller here, but for a real app, you would.
                         },
                       )
                     : null,
@@ -448,7 +450,7 @@ class _HazardDetectionPageState extends State<HazardDetectionPage> {
             children: [
               Icon(hazard.risk.icon, color: hazard.risk.color, size: 36),
               const SizedBox(width: 12),
-              Expanded(
+              Expanded( // <-- This is the fix for the overflow issue
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -590,7 +592,3 @@ extension ColorBrightness on Color {
     return hslDark.toColor();
   }
 }
-
-// Don't forget to add 'timeago' and 'intl' to your pubspec.yaml
-// timeago: ^3.6.0
-// intl: ^0.19.0 (already added for AnalyticsPage, ensure it's compatible)
