@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 // Import your pages (assuming these paths are correct)
-import '../pages/safety_talks_page.dart';
+import 'safety_talks_page.dart';
 import 'incident_reporting_page.dart';
 import 'risk_assessment_page.dart';
 import 'training_management_page.dart';
@@ -95,6 +95,8 @@ class DashboardPageState extends State<DashboardPage> {
                             fontWeight: FontWeight.bold,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
+                      maxLines: 1, // Fix: Added maxLines and overflow for title
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -153,10 +155,10 @@ class DashboardPageState extends State<DashboardPage> {
                 child: Icon(icon, size: 32, color: Colors.white),
               ),
               const SizedBox(height: 10),
-              // Wrapped text in Expanded and FittedBox to prevent overflow
+              // FIX: Use Expanded to allow the text to take up available space
+              // and TextOverflow.ellipsis to handle long labels.
               Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
+                child: Center(
                   child: Text(
                     label,
                     textAlign: TextAlign.center,
@@ -165,7 +167,7 @@ class DashboardPageState extends State<DashboardPage> {
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
-                      fontSize: 16, // Starting font size, will scale down if needed
+                      fontSize: 16,
                     ),
                   ),
                 ),
@@ -200,7 +202,7 @@ class DashboardPageState extends State<DashboardPage> {
           crossAxisCount: 3,
           mainAxisSpacing: 14,
           crossAxisSpacing: 14,
-          childAspectRatio: 1.1, // Increased aspect ratio to provide more vertical space
+          childAspectRatio: 1.0, // FIX: Changed to 1.0 for square tiles, which is more stable.
         ),
         itemBuilder: (context, index) {
           final item = gridItems[index];
@@ -293,10 +295,9 @@ class DashboardPageState extends State<DashboardPage> {
       child: Column(
         children: [
           SizedBox(
-            height: 200, // Explicitly set height for the header
+            height: 200,
             child: Stack(
               children: [
-                // Background gradient
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
@@ -308,22 +309,16 @@ class DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
                 ),
-                // Content (Logo and text)
                 Positioned(
                   bottom: 16,
                   left: 16,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CircleAvatar(
+                      const CircleAvatar(
                         radius: 30,
                         backgroundColor: Colors.white,
-                        // Using backgroundImage is the correct way to display an image in CircleAvatar
-                        backgroundImage: const AssetImage('assets/logo.png'),
-                        onBackgroundImageError: (exception, stackTrace) {
-                          // This helps debug if the image path is wrong
-                          print('Failed to load logo: $exception');
-                        },
+                        backgroundImage: AssetImage('assets/logo.png'),
                       ),
                       const SizedBox(height: 12),
                       const Text(
