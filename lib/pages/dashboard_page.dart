@@ -1,8 +1,9 @@
 // pages/dashboard_page.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'dart:ui'; // For BackdropFilter
 
-// Import your pages (assuming these paths are correct)
+// Standardized imports. Assuming all pages are in the same directory.
 import 'safety_talks_page.dart';
 import 'incident_reporting_page.dart';
 import 'risk_assessment_page.dart';
@@ -11,13 +12,16 @@ import 'compliance_tracking_page.dart';
 import 'hazard_detection_page.dart';
 import 'analytics_page.dart';
 import 'virtualisation_page.dart';
-import 'safety_page.dart'; // Assuming this is SafetySheetsPage
-import 'emergency_page.dart'; // Assuming this is EmergencyContactsPage
-import 'calendar.dart'; // Assuming this is CalendarPage
+import 'safety_page.dart';
+import 'emergency_page.dart';
+import 'calendar.dart';
 import 'user_profile_page.dart';
 import 'settings_page.dart';
 import 'login_page.dart';
 import 'quickaccess_bar.dart';
+import 'safety_page.dart';
+import 'emergency_page.dart';
+import 'virtualisation_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -27,7 +31,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class DashboardPageState extends State<DashboardPage> {
-  final String _userName = "Chrishent Matakala";
+  final String _userName = "john";
 
   List<Map<String, String>> calendarEvents = [
     {
@@ -82,7 +86,7 @@ class DashboardPageState extends State<DashboardPage> {
                   color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.event, color: Theme.of(context).colorScheme.primary, size: 24),
+                child: Icon(Icons.event, color: Theme.of(context).colorScheme.primary, size: 20),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -95,7 +99,7 @@ class DashboardPageState extends State<DashboardPage> {
                             fontWeight: FontWeight.bold,
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
-                      maxLines: 1, // Fix: Added maxLines and overflow for title
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
@@ -126,39 +130,48 @@ class DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  // Refactored to use Stack for precise positioning
   Widget _buildGridItem(String label, IconData icon, Widget page, List<Color> colors) {
-    return Card(
-      elevation: 6,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => page)),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: colors,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              colors[0],
+              colors[1],
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: InkWell(
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => page)),
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
             children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                padding: const EdgeInsets.all(12),
-                child: Icon(icon, size: 32, color: Colors.white),
-              ),
-              const SizedBox(height: 10),
-              // FIX: Use Expanded to allow the text to take up available space
-              // and TextOverflow.ellipsis to handle long labels.
-              Expanded(
+              Positioned(
+                top: 12,
+                left: 0,
+                right: 0,
                 child: Center(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.3),
+                      shape: BoxShape.circle,
+                    ),
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(icon, size: 24, color: Colors.white),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 12,
+                left: 4,
+                right: 4,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
                   child: Text(
                     label,
                     textAlign: TextAlign.center,
@@ -167,7 +180,7 @@ class DashboardPageState extends State<DashboardPage> {
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: 14,
                     ),
                   ),
                 ),
@@ -192,17 +205,20 @@ class DashboardPageState extends State<DashboardPage> {
       {"icon": Icons.person, "label": "Profile", "page": const UserProfilePage(), "colors": [Colors.cyan.shade600, Colors.cyan.shade800]},
     ];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20),
+    return Card(
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      margin: EdgeInsets.zero,
       child: GridView.builder(
+        padding: const EdgeInsets.all(12.0),
         physics: const NeverScrollableScrollPhysics(),
         shrinkWrap: true,
         itemCount: gridItems.length,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
-          mainAxisSpacing: 14,
-          crossAxisSpacing: 14,
-          childAspectRatio: 1.0, // FIX: Changed to 1.0 for square tiles, which is more stable.
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          childAspectRatio: 1.0, // Set to 1.0
         ),
         itemBuilder: (context, index) {
           final item = gridItems[index];
@@ -362,40 +378,33 @@ class DashboardPageState extends State<DashboardPage> {
       extendBodyBehindAppBar: true,
       appBar: _buildAppBar(context),
       drawer: _buildDrawer(context, 'Home'),
-      body: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [colorScheme.surface, colorScheme.background],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [colorScheme.surface, colorScheme.background],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-          SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + kToolbarHeight + 20, 20, 20),
+        ),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 100, left: 16, right: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      getGreeting(),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w500,
-                          ),
-                    ),
-                    Text(
-                      _userName,
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            color: colorScheme.onSurface,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ],
+                Text(
+                  getGreeting(),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+                Text(
+                  _userName,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 24),
                 _buildGridAccessCard(context),
@@ -425,7 +434,7 @@ class DashboardPageState extends State<DashboardPage> {
               ],
             ),
           ),
-        ],
+        ),
       ),
       bottomNavigationBar: const QuickAccessBar(currentLabel: 'Home'),
     );

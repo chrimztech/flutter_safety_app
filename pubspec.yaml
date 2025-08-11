@@ -27,10 +27,12 @@ dependencies:
   shared_preferences: ^2.0.12
   path_provider: ^2.1.0
   flutter_launcher_icons: "^0.13.1" 
+  firebase_core: ^2.24.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: 0.14.4
 
 flutter_native_splash:
   color: "#ffffff"

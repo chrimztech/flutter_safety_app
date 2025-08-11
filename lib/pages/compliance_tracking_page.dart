@@ -47,7 +47,8 @@ class _ComplianceTrackingPageState extends State<ComplianceTrackingPage> {
         title: 'Worker Safety Training (Q3)',
         dueDate: DateTime(2025, 7, 30), // Current date, so it's overdue
         status: ComplianceStatus.overdue,
-        description: 'Mandatory safety training session for all new employees and refreshers for existing staff.',
+        description:
+            'Mandatory safety training session for all new employees and refreshers for existing staff.',
       ),
       ComplianceItem(
         title: 'Hazardous Materials Handling Permit Renewal',
@@ -102,9 +103,11 @@ class _ComplianceTrackingPageState extends State<ComplianceTrackingPage> {
     // 3. Sort by due date (overdue first)
     tempItems.sort((a, b) {
       // Sort overdue items first, then by due date
-      if (a.status == ComplianceStatus.overdue && b.status != ComplianceStatus.overdue) {
+      if (a.status == ComplianceStatus.overdue &&
+          b.status != ComplianceStatus.overdue) {
         return -1; // a comes before b
-      } else if (b.status == ComplianceStatus.overdue && a.status != ComplianceStatus.overdue) {
+      } else if (b.status == ComplianceStatus.overdue &&
+          a.status != ComplianceStatus.overdue) {
         return 1; // b comes before a
       }
       return a.dueDate.compareTo(b.dueDate);
@@ -130,12 +133,15 @@ class _ComplianceTrackingPageState extends State<ComplianceTrackingPage> {
   }
 
   // --- Add/Edit Compliance Item Dialog ---
-  Future<void> _showComplianceItemFormDialog({ComplianceItem? itemToEdit}) async {
+  Future<void> _showComplianceItemFormDialog(
+      {ComplianceItem? itemToEdit}) async {
     final bool isEditing = itemToEdit != null;
     final _formKey = GlobalKey<FormState>();
 
-    final TextEditingController titleController = TextEditingController(text: itemToEdit?.title);
-    final TextEditingController descriptionController = TextEditingController(text: itemToEdit?.description);
+    final TextEditingController titleController =
+        TextEditingController(text: itemToEdit?.title);
+    final TextEditingController descriptionController =
+        TextEditingController(text: itemToEdit?.description);
     DateTime? selectedDueDate = itemToEdit?.dueDate;
     ComplianceStatus? selectedStatus = itemToEdit?.status;
 
@@ -145,7 +151,10 @@ class _ComplianceTrackingPageState extends State<ComplianceTrackingPage> {
         return StatefulBuilder(
           builder: (context, setState2) {
             return AlertDialog(
-              title: Text(isEditing ? 'Edit Compliance Item' : 'Add New Compliance Item', style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(
+                isEditing ? 'Edit Compliance Item' : 'Add New Compliance Item',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
               content: SingleChildScrollView(
                 child: Form(
                   key: _formKey,
@@ -154,13 +163,20 @@ class _ComplianceTrackingPageState extends State<ComplianceTrackingPage> {
                     children: [
                       TextFormField(
                         controller: titleController,
-                        decoration: const InputDecoration(labelText: 'Title', prefixIcon: Icon(Icons.note_add)),
-                        validator: (value) => value == null || value.isEmpty ? 'Title is required' : null,
+                        decoration: const InputDecoration(
+                            labelText: 'Title',
+                            prefixIcon: Icon(Icons.note_add)),
+                        validator: (value) =>
+                            value == null || value.isEmpty
+                                ? 'Title is required'
+                                : null,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: descriptionController,
-                        decoration: const InputDecoration(labelText: 'Description', prefixIcon: Icon(Icons.description)),
+                        decoration: const InputDecoration(
+                            labelText: 'Description',
+                            prefixIcon: Icon(Icons.description)),
                         maxLines: 3,
                       ),
                       const SizedBox(height: 16),
@@ -186,7 +202,9 @@ class _ComplianceTrackingPageState extends State<ComplianceTrackingPage> {
                       const SizedBox(height: 16),
                       DropdownButtonFormField<ComplianceStatus>(
                         value: selectedStatus,
-                        decoration: const InputDecoration(labelText: 'Status', prefixIcon: Icon(Icons.check_circle_outline)),
+                        decoration: const InputDecoration(
+                            labelText: 'Status',
+                            prefixIcon: Icon(Icons.check_circle_outline)),
                         items: ComplianceStatus.values.map((status) {
                           return DropdownMenuItem(
                             value: status,
@@ -202,7 +220,8 @@ class _ComplianceTrackingPageState extends State<ComplianceTrackingPage> {
                         onChanged: (value) {
                           setState2(() => selectedStatus = value);
                         },
-                        validator: (value) => value == null ? 'Please select a status' : null,
+                        validator: (value) =>
+                            value == null ? 'Please select a status' : null,
                       ),
                     ],
                   ),
@@ -219,10 +238,13 @@ class _ComplianceTrackingPageState extends State<ComplianceTrackingPage> {
                   icon: Icon(isEditing ? Icons.save : Icons.add),
                   label: Text(isEditing ? 'Save' : 'Add'),
                   onPressed: () {
-                    if (!_formKey.currentState!.validate() || selectedDueDate == null || selectedStatus == null) {
+                    if (!_formKey.currentState!.validate() ||
+                        selectedDueDate == null ||
+                        selectedStatus == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                            content: Text('Please fill all required fields and select due date/status.'),
+                            content: Text(
+                                'Please fill all required fields and select due date/status.'),
                             backgroundColor: Colors.red),
                       );
                       return;
@@ -231,13 +253,16 @@ class _ComplianceTrackingPageState extends State<ComplianceTrackingPage> {
                     if (isEditing) {
                       setState(() {
                         itemToEdit!.title = titleController.text.trim();
-                        itemToEdit.description = descriptionController.text.trim();
+                        itemToEdit.description =
+                            descriptionController.text.trim();
                         itemToEdit.dueDate = selectedDueDate!;
-                        itemToEdit.updateStatus(selectedStatus!); // Use the model's update method
+                        itemToEdit.updateStatus(
+                            selectedStatus!); // Use the model's update method
                         _applyFiltersAndSort();
                       });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Compliance item "${itemToEdit.title}" updated successfully!')));
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(
+                              'Compliance item "${itemToEdit.title}" updated successfully!')));
                     } else {
                       final newItem = ComplianceItem(
                         title: titleController.text.trim(),
@@ -249,8 +274,9 @@ class _ComplianceTrackingPageState extends State<ComplianceTrackingPage> {
                         _allComplianceItems.insert(0, newItem);
                         _applyFiltersAndSort();
                       });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Compliance item "${newItem.title}" added successfully!')));
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(
+                              'Compliance item "${newItem.title}" added successfully!')));
                     }
                     Navigator.of(context).pop();
                   },
@@ -288,99 +314,11 @@ class _ComplianceTrackingPageState extends State<ComplianceTrackingPage> {
     return Scaffold(
       appBar: AppBar(
         leading: const BackButton(color: Colors.white),
-        title: const Text('Compliance Tracking', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.blue.shade700, // Corrected: Using Colors.blue
+        title: const Text('Compliance Tracking',
+            style: TextStyle(color: Colors.white)),
+        backgroundColor:
+            Colors.blue.shade700, // Corrected: Using Colors.blue
         elevation: 4,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(100), // Adjusted height for filters
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Column(
-              children: [
-                TextField(
-                  controller: _searchController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: 'Search compliance...',
-                    hintStyle: const TextStyle(color: Colors.white70),
-                    prefixIcon: const Icon(Icons.search, color: Colors.white),
-                    filled: true,
-                    fillColor: Colors.blue.shade600, // Corrected: Using Colors.blue
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide.none,
-                    ),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.white70),
-                            onPressed: () {
-                              _searchController.clear();
-                              _applyFiltersAndSort();
-                            },
-                          )
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        // 'All' chip
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: ChoiceChip(
-                            label: const Text('All'),
-                            selected: _selectedStatusFilter == 'All',
-                            selectedColor: Colors.white.withOpacity(0.3), // Lighter selected color
-                            backgroundColor: Colors.blue.shade600, // Corrected: Using Colors.blue
-                            labelStyle: TextStyle(
-                              color: _selectedStatusFilter == 'All' ? Colors.white : Colors.white70,
-                              fontWeight: _selectedStatusFilter == 'All' ? FontWeight.bold : FontWeight.normal,
-                            ),
-                            onSelected: (bool selected) {
-                              setState(() {
-                                _selectedStatusFilter = selected ? 'All' : 'All'; // Toggle to 'All'
-                                _applyFiltersAndSort();
-                              });
-                            },
-                          ),
-                        ),
-                        // Status chips
-                        ...ComplianceStatus.values.map((statusEnum) {
-                          final isSelected = _selectedStatusFilter == statusEnum.displayString;
-                          final color = isSelected ? statusEnum.color : Colors.white70;
-
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8.0),
-                            child: ChoiceChip(
-                              label: Text(statusEnum.displayString),
-                              selected: isSelected,
-                              selectedColor: statusEnum.color.withOpacity(0.3), // Lighter selected color for better contrast
-                              backgroundColor: Colors.blue.shade600, // Corrected: Using Colors.blue
-                              labelStyle: TextStyle(
-                                color: color,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              ),
-                              onSelected: (bool selected) {
-                                setState(() {
-                                  _selectedStatusFilter = selected ? statusEnum.displayString : 'All';
-                                  _applyFiltersAndSort();
-                                });
-                              },
-                            ),
-                          );
-                        }).toList(),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
       body: RefreshIndicator(
         onRefresh: _refresh,
@@ -389,6 +327,95 @@ class _ComplianceTrackingPageState extends State<ComplianceTrackingPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // --- Search and Filter UI Moved Here ---
+              TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search compliance...',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            _applyFiltersAndSort();
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: Colors.grey.shade200,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      // 'All' chip
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ChoiceChip(
+                          label: const Text('All'),
+                          selected: _selectedStatusFilter == 'All',
+                          selectedColor: Colors.blue,
+                          backgroundColor: Colors.grey.shade300,
+                          labelStyle: TextStyle(
+                            color: _selectedStatusFilter == 'All'
+                                ? Colors.white
+                                : Colors.black87,
+                            fontWeight: _selectedStatusFilter == 'All'
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                          onSelected: (bool selected) {
+                            setState(() {
+                              _selectedStatusFilter =
+                                  selected ? 'All' : 'All'; // Toggle to 'All'
+                              _applyFiltersAndSort();
+                            });
+                          },
+                        ),
+                      ),
+                      // Status chips
+                      ...ComplianceStatus.values.map((statusEnum) {
+                        final isSelected =
+                            _selectedStatusFilter == statusEnum.displayString;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: ChoiceChip(
+                            label: Text(statusEnum.displayString),
+                            selected: isSelected,
+                            selectedColor: statusEnum.color,
+                            backgroundColor: Colors.grey.shade300,
+                            labelStyle: TextStyle(
+                              color: isSelected ? Colors.white : Colors.black87,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                            onSelected: (bool selected) {
+                              setState(() {
+                                _selectedStatusFilter =
+                                    selected ? statusEnum.displayString : 'All';
+                                _applyFiltersAndSort();
+                              });
+                            },
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // --- End of Moved UI ---
+
               Text(
                 'Compliance Items (${_filteredAndSortedItems.length})',
                 style: theme.textTheme.titleLarge?.copyWith(
@@ -416,18 +443,22 @@ class _ComplianceTrackingPageState extends State<ComplianceTrackingPage> {
                           final item = _filteredAndSortedItems[index];
                           return ComplianceItemCard(
                             item: item,
-                            onEdit: () => _showComplianceItemFormDialog(itemToEdit: item),
+                            onEdit: () =>
+                                _showComplianceItemFormDialog(itemToEdit: item),
                             onDelete: () => _deleteComplianceItem(item),
                             onToggleStatus: () {
                               setState(() {
                                 // Simple toggle between pending and completed for demonstration
-                                item.updateStatus(item.status == ComplianceStatus.pending
-                                    ? ComplianceStatus.completed
-                                    : ComplianceStatus.pending);
+                                item.updateStatus(
+                                    item.status == ComplianceStatus.pending
+                                        ? ComplianceStatus.completed
+                                        : ComplianceStatus.pending);
                                 _applyFiltersAndSort(); // Re-sort if status affects order
                               });
                               ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Item "${item.title}" marked as ${item.status.displayString}')));
+                                  SnackBar(
+                                      content: Text(
+                                          'Item "${item.title}" marked as ${item.status.displayString}')));
                             },
                           );
                         },
@@ -441,7 +472,8 @@ class _ComplianceTrackingPageState extends State<ComplianceTrackingPage> {
         onPressed: () => _showComplianceItemFormDialog(),
         label: const Text('Add Compliance Item'),
         icon: const Icon(Icons.add),
-        backgroundColor: Colors.blue.shade700, // Corrected: Using Colors.blue
+        backgroundColor:
+            Colors.blue.shade700, // Corrected: Using Colors.blue
         foregroundColor: Colors.white,
       ),
       bottomNavigationBar: const QuickAccessBar(currentLabel: 'Compliance'),
@@ -467,13 +499,15 @@ class ComplianceItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // Check if the due date is today or in the past for pending items
     // This logic should ideally be within the ComplianceItem model or a helper.
-    final bool isOverdue = item.status == ComplianceStatus.pending && item.dueDate.isBefore(DateTime.now().subtract(const Duration(days: 1)).endOfDay);
+    final bool isOverdue = item.status == ComplianceStatus.pending &&
+        item.dueDate.isBefore(DateTime.now().subtract(const Duration(days: 1)));
     // Note: The mock data already sets some to 'overdue' manually.
     // For live data, you'd calculate this based on due date and current date.
     // The sorting logic in _applyFiltersAndSort also prioritizes overdue.
 
     // Determine the displayed status and color/icon
-    final ComplianceStatus displayedStatus = isOverdue ? ComplianceStatus.overdue : item.status;
+    final ComplianceStatus displayedStatus =
+        isOverdue ? ComplianceStatus.overdue : item.status;
 
     return Material(
       elevation: 4,
@@ -539,9 +573,13 @@ class ComplianceItemCard extends StatelessWidget {
                         value: 'toggle_status',
                         child: Row(
                           children: [
-                            Icon(item.status == ComplianceStatus.pending ? Icons.check : Icons.restore),
+                            Icon(item.status == ComplianceStatus.pending
+                                ? Icons.check
+                                : Icons.restore),
                             const SizedBox(width: 8),
-                            Text(item.status == ComplianceStatus.pending ? 'Mark Completed' : 'Mark Pending'),
+                            Text(item.status == ComplianceStatus.pending
+                                ? 'Mark Completed'
+                                : 'Mark Pending'),
                           ],
                         ),
                       ),
@@ -583,7 +621,8 @@ class ComplianceItemCard extends StatelessWidget {
               Align(
                 alignment: Alignment.bottomRight,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: displayedStatus.color.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(25),
@@ -591,7 +630,8 @@ class ComplianceItemCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(displayedStatus.icon, color: displayedStatus.color, size: 20),
+                      Icon(displayedStatus.icon,
+                          color: displayedStatus.color, size: 20),
                       const SizedBox(width: 8),
                       Text(
                         displayedStatus.displayString,
@@ -617,24 +657,29 @@ class ComplianceItemCard extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(item.title,
+              style: const TextStyle(fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Description: ${item.description.isNotEmpty ? item.description : "No description provided."}'),
+                Text(
+                    'Description: ${item.description.isNotEmpty ? item.description : "No description provided."}'),
                 const SizedBox(height: 8),
                 Text('Due Date: ${DateFormat.yMMMd().format(item.dueDate)}'),
                 if (item.completionDate != null)
-                  Text('Completed On: ${DateFormat.yMMMd().add_jm().format(item.completionDate!)}'),
+                  Text(
+                      'Completed On: ${DateFormat.yMMMd().add_jm().format(item.completionDate!)}'),
                 const SizedBox(height: 8),
                 Row(
                   children: [
                     Icon(item.status.icon, color: item.status.color, size: 18),
                     const SizedBox(width: 8),
                     Text('Status: ${item.status.displayString}',
-                        style: TextStyle(color: item.status.color, fontWeight: FontWeight.bold)),
+                        style: TextStyle(
+                            color: item.status.color,
+                            fontWeight: FontWeight.bold)),
                   ],
                 ),
               ],

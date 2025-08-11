@@ -24,8 +24,8 @@ class UserProfile {
   // Factory constructor for initial dummy data or from JSON
   factory UserProfile.dummy() {
     return UserProfile(
-      name: 'Chrishent Matakala',
-      email: 'chrishent@example.com',
+      name: 'John',
+      email: 'john@example.com',
       phone: '+260 971 234567',
       location: 'Lusaka, Zambia',
       aboutMe: 'Passionate about environmental sustainability and community development.',

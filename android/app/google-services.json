@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1087984389795",
+    "project_id": "environmental-safety-app",
+    "storage_bucket": "environmental-safety-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1087984389795:android:669482ea4154607feff916",
+        "android_client_info": {
+          "package_name": "com.example.flutter_app_scaffold"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXNdBca7dbMmJ4SqyJFrwixBPcXeE5uKc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -14,11 +14,17 @@ class TrainingManagementPage extends StatefulWidget {
 
 enum TrainingFilter { all, upcoming, completed, overdue, missed, scheduled }
 
+class Administrator {
+  final String id;
+  final String name;
+
+  Administrator({required this.id, required this.name});
+}
+
 class _TrainingManagementPageState extends State<TrainingManagementPage> {
   final List<Training> _trainings = [];
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _assignedToController = TextEditingController();
   final Uuid _uuid = const Uuid();
 
   DateTime? _selectedDate;
@@ -35,6 +41,15 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
     'Waste Management',
     'First Aid',
     'Environmental Compliance',
+  ];
+
+  String? _selectedAssignedTo;
+  final List<Administrator> _administrators = [
+    Administrator(id: 'admin1', name: 'All Staff'),
+    Administrator(id: 'admin2', name: 'EHS Manager'),
+    Administrator(id: 'admin3', name: 'Maintenance Team'),
+    Administrator(id: 'admin4', name: 'Production Staff'),
+    Administrator(id: 'admin5', name: 'Safety Officer'),
   ];
 
   @override
@@ -60,8 +75,8 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
           title: 'Hazardous Waste Disposal',
           date: nowLusaka.subtract(const Duration(days: 10)),
           description: 'Refresher course on proper disposal of hazardous waste.',
-          type: 'Waste',
-          assignedTo: 'Waste Management',
+          type: 'Waste Management',
+          assignedTo: 'EHS Manager',
           status: TrainingStatus.completed),
       Training(
           id: _uuid.v4(),
@@ -76,8 +91,8 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
           title: 'Spill Containment Protocol',
           date: nowLusaka.add(const Duration(days: 1)),
           description: 'Hands-on training for chemical spill containment.',
-          type: 'Chemical',
-          assignedTo: 'Handling Team',
+          type: 'Chemical Handling',
+          assignedTo: 'Maintenance Team',
           status: TrainingStatus.upcoming),
       Training(
           id: _uuid.v4(),
@@ -103,8 +118,8 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
           date: nowLusaka.subtract(const Duration(days: 60)),
           description:
               'Understanding internal and external environmental audit processes.',
-          type: 'Compliance',
-          assignedTo: 'EHS',
+          type: 'Environmental Compliance',
+          assignedTo: 'EHS Manager',
           status: TrainingStatus.missed),
     ]);
     _updateAllTrainingStatuses();
@@ -142,7 +157,6 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-    _assignedToController.dispose();
     super.dispose();
   }
 
@@ -150,9 +164,11 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
     bool isEditing = trainingToEdit != null;
     _titleController.text = isEditing ? trainingToEdit.title : '';
     _descriptionController.text = isEditing ? trainingToEdit.description : '';
-    _assignedToController.text = isEditing ? trainingToEdit.assignedTo : '';
     _selectedDate = isEditing ? trainingToEdit.date : null;
-    _selectedTrainingType = isEditing ? trainingToEdit.type : _trainingTypes.first;
+    _selectedTrainingType =
+        isEditing ? trainingToEdit.type : _trainingTypes.first;
+    _selectedAssignedTo =
+        isEditing ? trainingToEdit.assignedTo : _administrators.first.name;
 
     showDialog(
       context: context,
@@ -183,15 +199,6 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                 minLines: 1,
               ),
               const SizedBox(height: 12),
-              TextField(
-                controller: _assignedToController,
-                decoration: InputDecoration(
-                  labelText: 'Assigned To (e.g., Dept, All Staff)',
-                  prefixIcon: const Icon(Icons.group),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-              const SizedBox(height: 12),
               ListTile(
                 onTap: () async {
                   final picked = await showDatePicker(
@@ -202,6 +209,7 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                   );
                   if (picked != null) {
                     setState(() => _selectedDate = picked);
+                    // ignore: use_build_context_synchronously
                     (context as Element).markNeedsBuild();
                   }
                 },
@@ -234,6 +242,27 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                   });
                 },
               ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _selectedAssignedTo,
+                decoration: InputDecoration(
+                  labelText: 'Assigned To',
+                  prefixIcon: const Icon(Icons.group),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                items: _administrators.map((admin) {
+                  return DropdownMenuItem(
+                    value: admin.name,
+                    child: Text(admin.name),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedAssignedTo = newValue!;
+                    (context as Element).markNeedsBuild();
+                  });
+                },
+              ),
             ],
           ),
         ),
@@ -246,11 +275,12 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
             onPressed: () {
               final title = _titleController.text.trim();
               final description = _descriptionController.text.trim();
-              final assignedTo = _assignedToController.text.trim();
+              final assignedTo = _selectedAssignedTo;
 
-              if (title.isEmpty || _selectedDate == null) {
+              if (title.isEmpty || _selectedDate == null || assignedTo == null) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please enter title and date')),
+                  const SnackBar(
+                      content: Text('Please enter title, date, and assignee')),
                 );
                 return;
               }
@@ -362,6 +392,13 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            // Navigate back to the previous screen
+            Navigator.pop(context);
+          },
+        ),
         title: const Text('Training Management',
             style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blue.shade800,
@@ -639,8 +676,6 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                                           shape: RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.circular(8)),
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 10, vertical: 6),
                                         ),
                                       ),
                                       const SizedBox(width: 8),
@@ -655,8 +690,6 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
                                           shape: RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.circular(8)),
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 10, vertical: 6),
                                         ),
                                       ),
                                     ],
@@ -682,6 +715,7 @@ class _TrainingManagementPageState extends State<TrainingManagementPage> {
     );
   }
 }
+
 extension StringExtension on String {
   String capitalize() {
     if (isEmpty) return this;
