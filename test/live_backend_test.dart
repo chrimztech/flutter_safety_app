@@ -136,11 +136,14 @@ void main() {
     testWidgets('module lists and a detail of each (administrator)', (tester) async {
       final s = await signIn(tester, 'admin@ohs.gov.zm', 'Regress#A1x');
       final api = s.api;
+      final company = await signIn(tester, 'employer@company.com', 'Regress#E1x');
       late String companyId;
       final created = <String, String>{};
       await tester.runAsync(() async {
         companyId = (await api.companies()).first.id;
         for (final spec in specs) {
+          // Registers are kept by the company (duty holder); everything else by the agency.
+          final writer = spec.reviewType == null ? api : company.api;
           final body = {
             ...spec.createExtras,
             if (spec.id == 'training') 'url': 'https://example.com/guide',
@@ -152,7 +155,7 @@ void main() {
                         ? '2026-12-31'
                         : f.initial ?? (f.options?.first.$1 ?? 'Render test ${spec.id}'),
           };
-          created[spec.id] = spec.idOf(await api.create(spec.path, body));
+          created[spec.id] = spec.idOf(await writer.create(spec.path, body));
         }
       });
       for (final spec in specs) {
@@ -161,7 +164,7 @@ void main() {
       }
       await tester.runAsync(() async {
         for (final spec in specs) {
-          await api.remove('${spec.path}/${created[spec.id]}');
+          await (spec.reviewType == null ? api : company.api).remove('${spec.path}/${created[spec.id]}');
         }
       });
     });
@@ -202,10 +205,17 @@ void main() {
         expect(find.text('Our company'), findsOneWidget);
         expect(find.text('Complaints'), findsNothing);
         expect(find.text('Employers'), findsNothing);
-        expect(find.text('Medical surveillance'), findsNothing);
+        expect(find.text('Medical surveillance'), findsOneWidget, reason: 'companies keep their own medical surveillance');
         expect(find.text('Permits & licences'), findsOneWidget);
       }, const Size(412, 3200));
       await show(tester, s, ModuleListScreen(spec: permitsSpec), () => expect(find.text('New permit'), findsNothing));
+      await show(tester, s, ModuleListScreen(spec: hazmatSpec), () => expect(find.text('New hazardous material'), findsOneWidget));
+    });
+
+    testWidgets('agency staff review registers but do not create them', (tester) async {
+      final s = await signIn(tester, 'officer@ohs.gov.zm', 'Regress#O1x');
+      await show(tester, s, ModuleListScreen(spec: hazmatSpec), () => expect(find.text('New hazardous material'), findsNothing));
+      await show(tester, s, ModuleListScreen(spec: permitsSpec), () => expect(find.text('New permit'), findsOneWidget));
     });
 
     testWidgets('platform console', (tester) async {

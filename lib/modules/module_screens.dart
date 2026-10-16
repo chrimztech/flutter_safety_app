@@ -4,13 +4,19 @@ import 'package:url_launcher/url_launcher.dart';
 import '../app/context_ext.dart';
 import '../data/fields.dart';
 import '../data/json.dart';
+import '../data/models.dart';
 import '../screens/common/attachments_section.dart';
 import '../screens/common/notification_bell.dart';
+import '../screens/common/review_section.dart';
 import '../ui/dynamic_form.dart';
 import '../ui/format.dart';
 import '../ui/record_list.dart';
 import '../ui/widgets.dart';
 import 'module_spec.dart';
+
+/// Company users never choose a company: the server files their records under their own.
+List<FieldSpec> _forViewer(List<FieldSpec> fields, AppUser me) =>
+    me.isEmployer ? fields.where((f) => f.kind != FieldKind.company).toList() : fields;
 
 /// List of a module's records with search, status filter, and "New" for those allowed to create.
 class ModuleListScreen extends StatefulWidget {
@@ -36,7 +42,7 @@ class _ModuleListScreenState extends State<ModuleListScreen> {
               onPressed: () async {
                 final created = await context.push<Object?>(FormScreen(
                   title: 'New ${spec.singular.toLowerCase()}',
-                  sections: [FieldSection('', '', '', spec.createFields)],
+                  sections: [FieldSection('', '', '', _forViewer(spec.createFields, me))],
                   submitLabel: 'Create',
                   onSubmit: (p) => context.api.create(spec.path, {...spec.createExtras, ...p}),
                 ));
@@ -122,7 +128,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
     final spec = widget.spec;
     final saved = await context.push<Object?>(FormScreen(
       title: 'Edit ${spec.singular.toLowerCase()}',
-      sections: [FieldSection('', '', '', spec.editFields ?? spec.createFields)],
+      sections: [FieldSection('', '', '', _forViewer(spec.editFields ?? spec.createFields, context.me))],
       initial: r,
       onlyChanged: true,
       onSubmit: (p) => context.api.update(_recordPath, p),
@@ -159,7 +165,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
     } else {
       done = await context.push<Object?>(FormScreen(
         title: a.label,
-        sections: [FieldSection('', '', '', a.fields)],
+        sections: [FieldSection('', '', '', _forViewer(a.fields, context.me))],
         initial: r,
         submitLabel: a.label,
         onSubmit: send,
@@ -194,6 +200,16 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
               Section(title: 'Details', children: [
                 for (final d in spec.details) _DetailValue(item: d, record: r),
               ]),
+              if (spec.reviewType != null) ...[
+                const SizedBox(height: 10),
+                ReviewSection(entityType: spec.reviewType!, entityId: spec.idOf(r)),
+              ],
+              if (r['confidential'] == true)
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Text('Clinical findings, vitals and test results are confidential to the company and its occupational health provider.',
+                      style: TextStyle(fontSize: 12.5, color: Theme.of(context).colorScheme.outline)),
+                ),
               if (spec.attachmentType != null) ...[
                 const SizedBox(height: 10),
                 AttachmentsSection(entityType: spec.attachmentType!, entityId: spec.idOf(r), canUpload: spec.canEdit(me)),

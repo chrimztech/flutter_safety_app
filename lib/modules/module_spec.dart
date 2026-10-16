@@ -54,6 +54,9 @@ class ModuleAction {
 }
 
 bool _staff(AppUser me) => me.isStaff;
+
+/// Duty holder: only the company keeps (creates, edits, deletes) these records.
+bool companyKeeps(AppUser me) => me.isEmployer;
 bool _anyone(AppUser me) => true;
 
 /// A record type shown with the generic list / detail / form screens. Field keys match the backend exactly; the
@@ -84,6 +87,7 @@ class ModuleSpec {
     this.sort,
     this.description,
     this.header,
+    this.reviewType,
   });
 
   final String id;
@@ -115,6 +119,9 @@ class ModuleSpec {
   final String? emptyMessage;
   final int Function(Json a, Json b)? sort;
   final String? description;
+
+  /// Set for registers the company keeps itself (duty holder): the inspectorate records reviews of type [reviewType].
+  final String? reviewType;
 
   /// Optional summary above the list (e.g. a risk matrix).
   final Widget Function(BuildContext context, List<Json> all)? header;

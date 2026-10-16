@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/fields.dart';
+import '../data/models.dart';
 import '../data/json.dart';
 import '../ui/format.dart';
 import 'module_spec.dart';
@@ -11,6 +12,8 @@ import 'module_spec.dart';
 /// Permissions (see DataInitializer): officers have employers/incidents/inspections/complaints read+write,
 /// analytics and medical read, reports read; administrators have everything in their agency. Company users read their
 /// own company's records only.
+
+bool _companyOnly(AppUser me, Json r) => me.isEmployer;
 
 String _today() => DateTime.now().toIso8601String().substring(0, 10);
 
@@ -101,6 +104,10 @@ String _riskLabel(Json r, String l, String s) {
 }
 
 final riskAssessmentsSpec = ModuleSpec(
+  reviewType: 'RISK_ASSESSMENT',
+  canCreate: companyKeeps,
+  canEdit: companyKeeps,
+  canDelete: companyKeeps,
   id: 'risk-assessments',
   title: 'Risk assessments',
   singular: 'Risk assessment',
@@ -230,6 +237,10 @@ final permitsSpec = ModuleSpec(
 const _responseTypes = [('FIRE', 'Fire'), ('CHEMICAL_SPILL', 'Chemical spill'), ('MEDICAL', 'Medical emergency'), ('EXPLOSION', 'Explosion'), ('STRUCTURAL', 'Structural collapse'), ('OTHER', 'Other')];
 
 final emergencySpec = ModuleSpec(
+  reviewType: 'EMERGENCY_RESPONSE',
+  canCreate: companyKeeps,
+  canEdit: companyKeeps,
+  canDelete: companyKeeps,
   id: 'emergency',
   title: 'Emergency response',
   singular: 'Emergency response',
@@ -265,6 +276,7 @@ final emergencySpec = ModuleSpec(
   actions: const [
     ModuleAction(
       label: 'Update status',
+      visible: _companyOnly,
       icon: Icons.flag_outlined,
       success: 'Response updated',
       fields: [
@@ -283,6 +295,10 @@ const _scoreKeys = [
 ];
 
 final safetyCultureSpec = ModuleSpec(
+  reviewType: 'SAFETY_CULTURE',
+  canCreate: companyKeeps,
+  canEdit: companyKeeps,
+  canDelete: companyKeeps,
   id: 'safetyculture',
   title: 'Safety culture',
   singular: 'Safety culture assessment',
@@ -291,7 +307,6 @@ final safetyCultureSpec = ModuleSpec(
   titleOf: (r) => text(r['assessmentTitle'], '${humanize(text(r['assessmentType'], 'Assessment'))} assessment'),
   subtitleOf: (r) => 'Overall ${fmtNum(r['overallScore'] ?? 0)}/100 · ${humanize(text(r['rating'], 'unrated'))} · ${fmtDate(date(r['assessmentDate']))}',
   statusKey: 'rating',
-  canView: (me) => me.isStaff,
   details: [
     const DetailItem('Company', 'employer', ShowAs.company),
     const DetailItem('Type', 'assessmentType', ShowAs.tag),
@@ -324,6 +339,11 @@ const _examTypes = ['PRE_EMPLOYMENT', 'PERIODIC', 'RETURN_TO_WORK', 'EXIT', 'SPE
 const _fitness = ['FIT', 'FIT_WITH_RESTRICTIONS', 'TEMPORARILY_UNFIT', 'PERMANENTLY_UNFIT', 'PENDING_REVIEW'];
 
 final medicalSpec = ModuleSpec(
+  reviewType: 'MEDICAL_SURVEILLANCE',
+  canView: (me) => me.isEmployer || me.can('medical:read'),
+  canCreate: companyKeeps,
+  canEdit: companyKeeps,
+  canDelete: companyKeeps,
   id: 'medical',
   title: 'Medical surveillance',
   singular: 'Medical examination',
@@ -334,10 +354,8 @@ final medicalSpec = ModuleSpec(
       '${r['fitnessDecision'] == null ? '' : ' · ${humanize(text(r['fitnessDecision']))}'}',
   statusKey: 'status',
   statusFilters: const ['PENDING', 'SCHEDULED', 'COMPLETED', 'OVERDUE', 'CANCELLED'],
-  canView: (me) => me.isStaff && me.can('medical:read'),
-  canCreate: (me) => me.can('medical:write'),
-  canEdit: (me) => me.can('medical:write'),
-  canDelete: (me) => me.can('medical:write'),
+  description: 'Kept by each company with its occupational health provider. The inspectorate sees the fitness outcome; '
+      'clinical findings, vitals and test results stay confidential to the company.',
   details: const [
     DetailItem('Record', 'recordNumber'),
     DetailItem('Company', 'employer', ShowAs.company),
@@ -379,7 +397,7 @@ final medicalSpec = ModuleSpec(
       label: 'Record result',
       icon: Icons.assignment_turned_in_outlined,
       success: 'Result recorded',
-      visible: (me, r) => me.can('medical:write'),
+      visible: (me, r) => me.isEmployer,
       fields: [
         FieldSpec('status', 'Status', FieldKind.choice, required: true, options: opts(const ['SCHEDULED', 'COMPLETED', 'OVERDUE', 'CANCELLED'])),
         FieldSpec('fitnessDecision', 'Fitness decision', FieldKind.choice, options: opts(_fitness)),
@@ -396,6 +414,10 @@ final medicalSpec = ModuleSpec(
 // ---------------------------------------------------------------- equipment certification
 
 final equipmentSpec = ModuleSpec(
+  reviewType: 'EQUIPMENT_CERTIFICATION',
+  canCreate: companyKeeps,
+  canEdit: companyKeeps,
+  canDelete: companyKeeps,
   id: 'equipment',
   title: 'Equipment certification',
   singular: 'Equipment certificate',
@@ -407,9 +429,6 @@ final equipmentSpec = ModuleSpec(
       .join(' · '),
   statusKey: 'status',
   statusFilters: const ['PENDING', 'CERTIFIED', 'EXPIRED', 'SUSPENDED', 'REJECTED', 'RENEWAL_PENDING'],
-  canCreate: (me) => me.isStaff && me.can('employers:write'),
-  canEdit: (me) => me.isStaff && me.can('employers:write'),
-  canDelete: (me) => me.isStaff && me.can('employers:write'),
   sort: (a, b) => text(a['expiryDate'], '9999').compareTo(text(b['expiryDate'], '9999')),
   details: const [
     DetailItem('Certificate', 'certificateNumber'),
@@ -452,7 +471,7 @@ final equipmentSpec = ModuleSpec(
       success: 'Certification renewed',
       fields: const [FieldSpec('expiryDate', 'New expiry date', FieldKind.date, required: true)],
       fixed: const {'status': 'CERTIFIED'},
-      visible: (me, r) => me.isStaff && me.can('employers:write'),
+      visible: (me, r) => me.isEmployer,
     ),
   ],
 );
@@ -460,6 +479,10 @@ final equipmentSpec = ModuleSpec(
 // ---------------------------------------------------------------- hazardous materials
 
 final hazmatSpec = ModuleSpec(
+  reviewType: 'HAZARDOUS_MATERIAL',
+  canCreate: companyKeeps,
+  canEdit: companyKeeps,
+  canDelete: companyKeeps,
   id: 'hazardousmaterials',
   title: 'Hazardous materials',
   singular: 'Hazardous material',

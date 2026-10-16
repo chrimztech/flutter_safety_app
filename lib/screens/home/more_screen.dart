@@ -71,10 +71,10 @@ final _items = <_Item>[
   _Item('OPERATIONS', Icons.gavel_outlined, 'Enforcement', 'Notices, fines and prosecutions', _all, _screen(const EnforcementScreen())),
   _Item('OPERATIONS', Icons.verified_outlined, 'Permits & licences', 'Issue, renew, suspend or revoke', _all, _module(permitsSpec)),
   _Item('OPERATIONS', Icons.local_fire_department_outlined, 'Emergency response', 'Fires, spills, medical emergencies', _all, _module(emergencySpec)),
-  _Item('OPERATIONS', Icons.groups_outlined, 'Safety culture', 'Leadership, engagement and reporting scores', _staff, _module(safetyCultureSpec)),
+  _Item('OPERATIONS', Icons.groups_outlined, 'Safety culture', 'Leadership, engagement and reporting scores', _all, _module(safetyCultureSpec)),
 
   _Item('HEALTH', Icons.medical_services_outlined, 'Medical surveillance', 'Workers\' medical examinations and fitness',
-      (me) => me.isStaff && me.can('medical:read'), _module(medicalSpec)),
+      (me) => me.isEmployer || me.can('medical:read'), _module(medicalSpec)),
   _Item('HEALTH', Icons.build_circle_outlined, 'Equipment certification', 'Boilers, cranes, pressure vessels', _all, _module(equipmentSpec)),
   _Item('HEALTH', Icons.science_outlined, 'Hazardous materials', 'Chemical register, storage and handling', _all, _module(hazmatSpec)),
 

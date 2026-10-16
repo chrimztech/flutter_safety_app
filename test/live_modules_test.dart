@@ -60,10 +60,11 @@ void main() {
   setUpAll(() => HttpOverrides.global = null);
 
   late OhsApi api;
-  String? token;
   late String companyId;
 
+  /// Each signed-in client keeps its own token.
   Future<OhsApi> signIn(String email, String password) async {
+    String? token;
     final a = OhsApi(ApiClient(baseUrl: liveUrl, readToken: () async => token));
     token = (await a.login(email, password)).token;
     return a;
@@ -82,28 +83,37 @@ void main() {
 
   for (final spec in specs) {
     test('module ${spec.id}: create, read, actions, edit, delete', () async {
-      final created = await api.create(spec.path, {...spec.createExtras, ...payloadFor(spec.createFields, companyId, spec.id)});
+      // Duty holder: registers are kept by the company itself; the inspectorate only reviews them.
+      final staff = api;
+      final owner = spec.reviewType == null ? api : await signIn('employer@company.com', 'Regress#E1x');
+      final fields = spec.reviewType == null ? spec.createFields : spec.createFields.where((f) => f.kind != FieldKind.company).toList();
+      if (spec.reviewType != null) {
+        await expectLater(staff.create(spec.path, {...spec.createExtras, ...payloadFor(spec.createFields, companyId, spec.id)}),
+            throwsA(isA<ApiException>().having((e) => e.status, 'status', 403)));
+      }
+      final api0 = owner;
+      final created = await api0.create(spec.path, {...spec.createExtras, ...payloadFor(fields, companyId, spec.id)});
       final id = spec.idOf(created);
       expect(id, isNotEmpty, reason: 'create returned $created');
       final path = '${spec.path}/$id';
 
-      final read = await api.one(path);
+      final read = await api0.one(path);
       expect(spec.titleOf(read), isNotEmpty);
       expect(spec.subtitleOf?.call(read) ?? '', isA<String>());
       for (final d in spec.details) {
         d.read(read); // every declared detail key resolves without error
       }
       // Every value the form sent comes back (proves the key is accepted, not silently dropped).
-      for (final f in spec.createFields.where((f) => f.kind == FieldKind.text && f.key != 'date')) {
+      for (final f in fields.where((f) => f.kind == FieldKind.text && f.key != 'date')) {
         expect(text(read[f.key]), contains('Mobile test'), reason: '${spec.id}.${f.key} was not saved');
       }
 
       for (final a in spec.actions) {
         final body = {...a.fixed, ...?a.computeFixed?.call(read), ...payloadFor(a.fields, companyId, 'action')};
         if (a.postAction == null) {
-          await api.update(path, body);
+          await api0.update(path, body);
         } else {
-          await api.action('$path/${a.postAction}', body);
+          await api0.action('$path/${a.postAction}', body);
         }
       }
 
@@ -111,16 +121,22 @@ void main() {
       if (editFields.isNotEmpty) {
         final edit = payloadFor(editFields.where((f) => f.kind == FieldKind.text).toList(), companyId, 'edited');
         if (edit.isNotEmpty) {
-          await api.update(path, edit);
-          final after = await api.one(path);
+          await api0.update(path, edit);
+          final after = await api0.one(path);
           for (final k in edit.keys) {
             expect(text(after[k]), contains('edited'), reason: '${spec.id}.$k edit not saved');
           }
         }
       }
 
-      await api.remove(path);
-      await expectLater(api.one(path), throwsA(isA<ApiException>()));
+      if (spec.reviewType != null) {
+        final review = await staff.create('reviews', {'entityType': spec.reviewType, 'entityId': id, 'status': 'CHANGES_REQUESTED', 'comment': 'Mobile test'});
+        expect(review['status'], 'CHANGES_REQUESTED');
+        expect((await api0.list('reviews', query: {'entityType': spec.reviewType, 'entityId': id})).single['comment'], 'Mobile test');
+        await expectLater(staff.remove(path), throwsA(isA<ApiException>().having((e) => e.status, 'status', 403)));
+      }
+      await api0.remove(path);
+      await expectLater(api0.one(path), throwsA(isA<ApiException>()));
     }, skip: skip);
   }
 
