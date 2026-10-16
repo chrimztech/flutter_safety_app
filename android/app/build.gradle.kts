@@ -23,7 +23,7 @@ android {
 
    defaultConfig {
     applicationId = "com.example.flutter_app_scaffold"
-    minSdkVersion(21)
+    minSdkVersion(23)
     targetSdkVersion(33)
     versionCode = 1
     versionName = "1.0"

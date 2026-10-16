@@ -1,65 +1,68 @@
-// main.dart
 import 'package:flutter/material.dart';
-import 'pages/dashboard_page.dart';
-import 'pages/incident_reporting_page.dart';
-import 'pages/risk_assessment_page.dart';
-import 'pages/training_management_page.dart';
-import 'pages/compliance_tracking_page.dart';
-import 'pages/hazard_detection_page.dart';
-import 'pages/analytics_page.dart';
-import 'pages/virtualisation_page.dart';
-import 'pages/safety_page.dart';
-import 'pages/emergency_page.dart';
-import 'pages/safety_talks_page.dart';
-import 'pages/calendar.dart';
-import 'pages/login_page.dart';
-import 'pages/user_profile_page.dart';
-import 'pages/settings_page.dart';
+import 'package:provider/provider.dart';
+
+import 'app/session.dart';
+import 'screens/auth/change_password_screen.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/home/home_shell.dart';
+import 'screens/platform/platform_screens.dart';
+import 'ui/theme.dart';
 
 void main() {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(ChangeNotifierProvider(create: (_) => SessionController()..start(), child: const OhsApp()));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+final _navigator = GlobalKey<NavigatorState>();
+
+class OhsApp extends StatelessWidget {
+  const OhsApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Environmental Safety App',
+      title: 'OHS Mobile',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.green,
-      ),
-      // ✅ Entry screen (temporary for testing Dashboard directly)
-      home: const DashboardPage(),
-
-      // ✅ Define named routes here
-      routes: {
-        '/dashboard': (context) => const DashboardPage(),
-        '/login': (context) => const LoginPage(),
-        '/profile': (context) => const UserProfilePage(),
-        '/settings': (context) => const SettingsPage(),
-        '/incident': (context) => const IncidentReportingPage(),
-        '/risk': (context) => const RiskAssessmentPage(),
-        '/training': (context) => const TrainingManagementPage(),
-        '/compliance': (context) => const ComplianceTrackingPage(),
-        '/hazard': (context) => const HazardDetectionPage(),
-        '/analytics': (context) => const AnalyticsPage(),
-        '/virtualization': (context) => const VirtualizationPage(),
-        '/safety': (context) => const SafetySheetsPage(),
-        '/emergency': (context) => const EmergencyContactsPage(),
-        '/safety-talks': (context) => const SafetyTalksPage(),
-        '/calendar': (context) => const CalendarPage(),
-      },
-
-      // ✅ Optional: Handle unknown routes
-      onUnknownRoute: (settings) => MaterialPageRoute(
-        builder: (_) => const Scaffold(
-          body: Center(child: Text('404 - Page Not Found')),
-        ),
-      ),
+      navigatorKey: _navigator,
+      theme: buildTheme(Brightness.light),
+      darkTheme: buildTheme(Brightness.dark),
+      home: const _Gate(),
     );
+  }
+}
+
+/// Chooses the first screen from the session: sign-in, the forced password change, or the app.
+class _Gate extends StatefulWidget {
+  const _Gate();
+
+  @override
+  State<_Gate> createState() => _GateState();
+}
+
+class _GateState extends State<_Gate> {
+  SessionStatus? _last;
+
+  @override
+  Widget build(BuildContext context) {
+    final session = context.watch<SessionController>();
+    final status = session.status;
+    if (_last != status) {
+      // When the session ends (sign-out, or the server ended it), close any open screens on top of this one.
+      if (_last == SessionStatus.signedIn) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _navigator.currentState?.popUntil((r) => r.isFirst));
+      }
+      _last = status;
+    }
+    switch (status) {
+      case SessionStatus.starting:
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      case SessionStatus.signedOut:
+        return const LoginScreen(key: ValueKey('login'));
+      case SessionStatus.signedIn:
+        final user = session.user!;
+        if (user.mustChangePassword) return const ChangePasswordScreen(forced: true);
+        if (session.account!.isSuperAdmin && !session.supportMode) return const PlatformShell();
+        return HomeShell(key: ValueKey('${user.id}-${session.supportAgencyName ?? ''}'));
+    }
   }
 }
