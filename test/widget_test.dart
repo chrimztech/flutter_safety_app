@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app_scaffold/app/offline_queue.dart';
 import 'package:flutter_app_scaffold/app/session.dart';
+import 'package:flutter_app_scaffold/data/api_client.dart';
+import 'package:flutter_app_scaffold/data/ohs_api.dart';
 import 'package:flutter_app_scaffold/data/json.dart';
 import 'package:flutter_app_scaffold/data/models.dart';
 import 'package:flutter_app_scaffold/screens/auth/login_screen.dart';
 import 'package:flutter_app_scaffold/ui/format.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('backend JSON', () {
@@ -97,6 +101,23 @@ void main() {
       expect(r.autoFindings.single, contains('20%'));
       expect(r.period, '2026-09-01 to 2026-09-30');
       expect(r.scope, 'District: Lusaka');
+    });
+  });
+
+  group('offline checklist queue', () {
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    test('keeps the checklist and queued results on the device while offline', () async {
+      await OfflineQueue.cacheChecklist('ins-1', [{'id': 'a', 'text': 'Guard rails', 'result': 'PENDING'}]);
+      await OfflineQueue.queueResults('ins-1', {'results': [{'id': 'a', 'result': 'FAIL', 'notes': 'missing'}], 'createActions': true});
+      expect((await OfflineQueue.cachedChecklist('ins-1'))!.single['text'], 'Guard rails');
+      expect((await OfflineQueue.pending('ins-1'))!['createActions'], isTrue);
+      expect(await OfflineQueue.pendingCount(), 1);
+    });
+
+    test('nothing queued: sync does nothing', () async {
+      final api = OhsApi(ApiClient(baseUrl: 'http://127.0.0.1:9', readToken: () async => null));
+      expect(await OfflineQueue.sync(api, 'none'), isNull);
     });
   });
 

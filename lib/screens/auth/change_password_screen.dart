@@ -52,7 +52,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         title: Text(widget.forced ? 'Choose your password' : 'Change password'),
         automaticallyImplyLeading: !widget.forced,
         actions: [
-          if (widget.forced) TextButton(onPressed: () => context.session.signOut(), child: const Text('Sign out', style: TextStyle(color: Colors.white))),
+          if (widget.forced) TextButton(onPressed: () => context.session.signOut(), child: const Text('Sign out')),
         ],
       ),
       body: Form(

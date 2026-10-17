@@ -5,6 +5,7 @@ import '../../data/models.dart';
 import '../../ui/format.dart';
 import '../../ui/widgets.dart';
 import 'recommendation_card.dart';
+import '../../ui/theme.dart';
 
 /// One hazard alert: what the sensor measured, immediate guidance, AI prevention recommendations and the review.
 /// Company users acknowledge alerts and add notes; OHS staff resolve them or mark false alarms.
@@ -52,7 +53,8 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
             onRefresh: reload,
             child: ListView(padding: const EdgeInsets.all(12), children: [
               Card(
-                color: toneOf(e.severity).withValues(alpha: 0.08),
+                color: toneOf(e.severity).withValues(alpha: 0.12),
+                shape: noticeShape(toneOf(e.severity)),
                 child: Padding(
                   padding: const EdgeInsets.all(14),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -70,9 +72,10 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
               if ((e.guidance ?? '').isNotEmpty) ...[
                 const SizedBox(height: 10),
                 Card(
-                  color: const Color(0xFFFFF8E1),
+                  color: OhsColors.amberTint,
+                  shape: amberNotice,
                   child: ListTile(
-                    leading: const Icon(Icons.priority_high, color: Color(0xFFEF6C00)),
+                    leading: const Icon(Icons.priority_high, color: OhsColors.amber),
                     title: const Text('Immediate action', style: TextStyle(fontWeight: FontWeight.w700)),
                     subtitle: Text(e.guidance!),
                   ),

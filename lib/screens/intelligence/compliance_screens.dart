@@ -7,6 +7,7 @@ import '../../ui/format.dart';
 import '../../ui/widgets.dart';
 import '../companies/companies_screen.dart';
 import '../inspections/inspection_detail_screen.dart';
+import '../../ui/theme.dart';
 
 /// Compliance calendar: inspections, permit / certificate expiries, action deadlines, medical examinations by date.
 class ComplianceCalendarScreen extends StatefulWidget {
@@ -151,8 +152,8 @@ class ComplianceTrackingScreen extends StatelessWidget {
                 childAspectRatio: 1.0,
                 children: [
                   StatTile(label: 'Average compliance', value: '${fmtNum(avg)}%', icon: Icons.verified_outlined),
-                  StatTile(label: 'Below 60%', value: '${companies.where((c) => (c.complianceScore ?? 0) < 60).length}', icon: Icons.warning_amber, color: Colors.red),
-                  StatTile(label: 'Not inspected in 12 months', value: '$notInspected', icon: Icons.event_busy, color: Colors.orange),
+                  StatTile(label: 'Below 60%', value: '${companies.where((c) => (c.complianceScore ?? 0) < 60).length}', icon: Icons.warning_amber, color: OhsColors.red),
+                  StatTile(label: 'Not inspected in 12 months', value: '$notInspected', icon: Icons.event_busy, color: OhsColors.amber),
                 ],
               ),
               const SizedBox(height: 10),
@@ -168,7 +169,7 @@ class ComplianceTrackingScreen extends StatelessWidget {
                         value: ((c.complianceScore ?? 0) / 100).clamp(0, 1),
                         minHeight: 6,
                         borderRadius: BorderRadius.circular(3),
-                        color: (c.complianceScore ?? 0) >= 80 ? Colors.green : (c.complianceScore ?? 0) >= 60 ? Colors.orange : Colors.red,
+                        color: (c.complianceScore ?? 0) >= 80 ? OhsColors.green : (c.complianceScore ?? 0) >= 60 ? OhsColors.amber : OhsColors.red,
                       ),
                     ]),
                     trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [

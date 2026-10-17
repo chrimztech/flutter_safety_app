@@ -13,6 +13,7 @@ import '../ui/format.dart';
 import '../ui/record_list.dart';
 import '../ui/widgets.dart';
 import 'module_spec.dart';
+import '../ui/theme.dart';
 
 /// Company users never choose a company: the server files their records under their own.
 List<FieldSpec> _forViewer(List<FieldSpec> fields, AppUser me) =>
@@ -31,18 +32,25 @@ class ModuleListScreen extends StatefulWidget {
 class _ModuleListScreenState extends State<ModuleListScreen> {
   final _list = GlobalKey<RecordListState<Json>>();
 
+  /// Latest regulator review per record id (registers the company keeps itself).
+  Map<String, Json> _latest = const {};
+
+  static const _reviewLabels = {'ACCEPTED': 'Accepted', 'CHANGES_REQUESTED': 'Changes requested', 'NOTED': 'Noted'};
+
   @override
   Widget build(BuildContext context) {
     final spec = widget.spec;
     final me = context.me;
+    final createFields = me.isEmployer && spec.companyCreateFields != null ? spec.companyCreateFields! : spec.createFields;
+    final createLabel = me.isEmployer && spec.companyCreateLabel != null ? spec.companyCreateLabel! : 'New ${spec.singular.toLowerCase()}';
     return Scaffold(
       appBar: AppBar(title: Text(spec.title), actions: const [NotificationBell()]),
-      floatingActionButton: spec.createFields.isNotEmpty && spec.canCreate(me)
+      floatingActionButton: createFields.isNotEmpty && spec.canCreate(me)
           ? FloatingActionButton.extended(
               onPressed: () async {
                 final created = await context.push<Object?>(FormScreen(
-                  title: 'New ${spec.singular.toLowerCase()}',
-                  sections: [FieldSection('', '', '', _forViewer(spec.createFields, me))],
+                  title: createLabel,
+                  sections: [FieldSection('', '', '', _forViewer(createFields, me))],
                   submitLabel: 'Create',
                   onSubmit: (p) => context.api.create(spec.path, {...spec.createExtras, ...p}),
                 ));
@@ -52,19 +60,42 @@ class _ModuleListScreenState extends State<ModuleListScreen> {
                 }
               },
               icon: const Icon(Icons.add),
-              label: Text('New ${spec.singular.toLowerCase()}'),
+              label: Text(createLabel),
             )
           : null,
       body: RecordList<Json>(
         key: _list,
         load: () async {
-          final list = await context.api.list(spec.path);
+          final api = context.api;
+          if (spec.reviewType != null) {
+            try {
+              final rows = await api.list('reviews/latest', query: {'entityType': spec.reviewType});
+              final latest = {for (final r in rows) text(r['entityId']): r};
+              if (mounted) setState(() => _latest = latest);
+            } catch (_) {
+              // Review badges are extra; the list still loads.
+            }
+          }
+          final list = await api.list(spec.path);
           list.sort(spec.sort ?? (a, b) => text(b['createdAt']).compareTo(text(a['createdAt'])));
           return list;
         },
-        header: spec.header == null && spec.description == null
+        header: spec.header == null && spec.description == null && spec.reviewType == null
             ? null
             : (all) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  if (_latest.values.any((r) => r['status'] == 'CHANGES_REQUESTED'))
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+                      child: Card(
+                        color: OhsColors.amberTint,
+                        shape: amberNotice,
+                        child: ListTile(
+                          leading: const Icon(Icons.rate_review_outlined, color: OhsColors.amber),
+                          title: Text('${_latest.values.where((r) => r['status'] == 'CHANGES_REQUESTED').length} with changes requested by the inspectorate'),
+                          subtitle: Text(me.isEmployer ? 'Open them to see what to change.' : 'Awaiting an update from the company.'),
+                        ),
+                      ),
+                    ),
                   if (spec.description != null)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
@@ -92,6 +123,7 @@ class _ModuleListScreenState extends State<ModuleListScreen> {
               [
                 if (spec.subtitleOf != null) spec.subtitleOf!(r),
                 if (company != null && !me.isEmployer) company,
+                if (spec.reviewType != null) 'Review: ${_reviewLabels[_latest[spec.idOf(r)]?['status']] ?? 'not reviewed'}',
               ].where((s) => s.isNotEmpty).join(' · '),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -159,6 +191,10 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
       return a.postAction == null ? api.update(_recordPath, body) : api.action('$_recordPath/${a.postAction}', body);
     }
 
+    if (a.removes) {
+      if (await runAction(context, () => api.remove(_recordPath), success: a.success ?? '${a.label} done') && mounted) Navigator.pop(context);
+      return;
+    }
     Object? done;
     if (a.fields.isEmpty) {
       done = await runAction(context, () => send(const {}), success: a.success ?? '${a.label} done') ? true : null;

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../app/context_ext.dart';
+import '../../app/offline_queue.dart';
+import '../../data/api_client.dart';
 import '../../data/json.dart';
 import '../../ui/format.dart';
 import '../../ui/widgets.dart';
+import '../../ui/theme.dart';
 
 /// Conduct an inspection with a checklist: apply a template, mark each item Pass / Fail / N/A with notes, save.
 /// The server recalculates the compliance score and violations, and can raise corrective actions for failed items.
@@ -41,12 +44,42 @@ class _InspectionChecklistScreenState extends State<InspectionChecklistScreen> {
     super.dispose();
   }
 
+  /// Results saved on this device that have not reached the server yet.
+  Json? _queued;
+  bool _offlineCopy = false;
+
   Future<void> _load() async {
+    final api = context.api;
     try {
-      final list = await context.api.list(_path);
+      // Anything saved offline goes first, so the server's copy is up to date.
+      final synced = await OfflineQueue.sync(api, widget.inspectionId);
+      if (synced != null && mounted) showMessage(context, 'Results saved offline have been sent');
+      final list = await api.list(_path);
+      await OfflineQueue.cacheChecklist(widget.inspectionId, list);
+      _offlineCopy = false;
       _adopt(list);
+    } on ApiException catch (e) {
+      final cached = e.isOffline ? await OfflineQueue.cachedChecklist(widget.inspectionId) : null;
+      if (cached == null) {
+        if (mounted) setState(() => _error = e);
+        return;
+      }
+      _offlineCopy = true;
+      _adopt(cached);
     } catch (e) {
-      setState(() => _error = e);
+      if (mounted) setState(() => _error = e);
+    }
+    final queued = await OfflineQueue.pending(widget.inspectionId);
+    if (mounted) setState(() => _queued = queued);
+    // Show queued results over the cached copy.
+    if (queued != null && mounted) {
+      setState(() {
+        for (final r in items(queued['results'])) {
+          final id = text(r['id']);
+          _results[id] = text(r['result'], 'PENDING');
+          _notes[id]?.text = text(r['notes']);
+        }
+      });
     }
   }
 
@@ -104,9 +137,29 @@ class _InspectionChecklistScreenState extends State<InspectionChecklistScreen> {
         {'id': text(i['id']), 'result': _results[text(i['id'])] ?? 'PENDING', 'notes': _notes[text(i['id'])]?.text.trim() ?? ''},
     ];
     Json? summary;
+    var offline = false;
     final ok = await runAction(context, () async {
-      summary = obj(await context.api.client.patch(_path, {'results': results, 'createActions': createActions}));
+      try {
+        summary = obj(await context.api.client.patch(_path, {'results': results, 'createActions': createActions}));
+        await OfflineQueue.cacheChecklist(widget.inspectionId, items(summary!['items']));
+      } on ApiException catch (e) {
+        if (!e.isOffline) rethrow;
+        // No connection: keep the results on this device and send them later.
+        await OfflineQueue.queueResults(widget.inspectionId, {'results': results, 'createActions': createActions});
+        offline = true;
+      }
     });
+    if (offline) {
+      final queued = await OfflineQueue.pending(widget.inspectionId);
+      if (!mounted) return;
+      setState(() {
+        _queued = queued;
+        _dirty = false;
+      });
+      showMessage(context, 'No connection — results saved on this device. They are sent automatically when you are back online.');
+      return;
+    }
+    if (mounted) setState(() => _queued = null);
     if (!ok || summary == null || !mounted) return;
     _adopt(items(summary!['items']));
     final s = summary!;
@@ -139,15 +192,28 @@ class _InspectionChecklistScreenState extends State<InspectionChecklistScreen> {
                       message: widget.canEdit ? 'Tap the + icon above to apply a checklist template.' : null,
                     )
                   : ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 120), children: [
+                      if (_offlineCopy || _queued != null)
+                        Card(
+                          color: OhsColors.amberTint,
+                          shape: amberNotice,
+                          child: ListTile(
+                            leading: const Icon(Icons.cloud_off, color: OhsColors.amber),
+                            title: Text(_queued != null ? 'Results saved on this device, not sent yet' : 'Offline — showing the copy saved on this device'),
+                            subtitle: Text(_queued != null
+                                ? 'Saved ${fmtDateTime(date(_queued!['queuedAt']))}. They are sent automatically when the connection returns.'
+                                : 'You can record results; they are sent when the connection returns.'),
+                            trailing: IconButton(tooltip: 'Try now', icon: const Icon(Icons.sync), onPressed: _load),
+                          ),
+                        ),
                       Text(widget.title, style: Theme.of(context).textTheme.titleMedium),
                       const SizedBox(height: 8),
                       Card(
                         child: Padding(
                           padding: const EdgeInsets.all(12),
                           child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-                            _Count('Pass', passed, Colors.green),
-                            _Count('Fail', failed, Colors.red),
-                            _Count('Pending', pending, Colors.grey),
+                            _Count('Pass', passed, OhsColors.green),
+                            _Count('Fail', failed, OhsColors.red),
+                            _Count('Pending', pending, OhsColors.text3),
                             _Count('Score', score?.round(), Theme.of(context).colorScheme.primary, suffix: '%'),
                           ]),
                         ),

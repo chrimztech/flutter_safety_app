@@ -6,6 +6,7 @@
 // Creates records and deletes them again. Never point this at production.
 import 'dart:io';
 
+import 'package:flutter_app_scaffold/app/offline_queue.dart';
 import 'package:flutter_app_scaffold/data/api_client.dart';
 import 'package:flutter_app_scaffold/data/company_profile.dart';
 import 'package:flutter_app_scaffold/data/fields.dart';
@@ -14,6 +15,7 @@ import 'package:flutter_app_scaffold/data/ohs_api.dart';
 import 'package:flutter_app_scaffold/modules/module_spec.dart';
 import 'package:flutter_app_scaffold/modules/specs.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 const liveUrl = String.fromEnvironment('OHS_LIVE_URL');
 final skip = liveUrl.isEmpty ? 'set --dart-define=OHS_LIVE_URL to run' : null;
@@ -167,6 +169,57 @@ void main() {
     await api.remove('inspections/${ins.id}');
     await api.update('checklists/${tpl['id']}', {'active': false});
     await api.remove('checklists/${tpl['id']}');
+  }, skip: skip);
+
+  test('offline checklist results are sent when the connection returns', () async {
+    SharedPreferences.setMockInitialValues({});
+    final tpl = await api.create('checklists', {'name': 'Mobile offline test', 'sector': '', 'items': ['Fire extinguisher serviced', 'Exit clear']});
+    final ins = await api.scheduleInspection(employerId: companyId, type: 'routine', date: DateTime.now());
+    final list = items(await api.action('inspections/${ins.id}/checklist', {'templateId': tpl['id']}));
+    // Saved while offline (queued), then synced.
+    await OfflineQueue.queueResults(ins.id, {
+      'results': [
+        {'id': list[0]['id'], 'result': 'PASS', 'notes': ''},
+        {'id': list[1]['id'], 'result': 'FAIL', 'notes': 'Blocked by pallets'},
+      ],
+      'createActions': false,
+    });
+    final summary = await OfflineQueue.sync(api, ins.id);
+    expect(summary!['complianceScore'], 50.0);
+    expect(await OfflineQueue.pending(ins.id), isNull, reason: 'sent results leave the queue');
+    expect((await OfflineQueue.cachedChecklist(ins.id))!.firstWhere((i) => i['id'] == list[1]['id'])['notes'], 'Blocked by pallets');
+    await api.remove('inspections/${ins.id}');
+    await api.update('checklists/${tpl['id']}', {'active': false});
+    await api.remove('checklists/${tpl['id']}');
+  }, skip: skip);
+
+  test('permit application, decision and withdrawal', () async {
+    final company = await signIn('employer@company.com', 'Regress#E1x');
+    final app = await company.create('permits', payloadFor(permitsSpec.companyCreateFields!, companyId, 'apply'));
+    expect(app['status'], 'PENDING');
+    final approve = permitsSpec.actions.firstWhere((a) => a.label == 'Approve application');
+    final granted = await api.update('permits/${app['id']}', {...approve.fixed, ...payloadFor(approve.fields, companyId, 'ok')});
+    expect(granted['status'], 'ACTIVE');
+    final app2 = await company.create('permits', payloadFor(permitsSpec.companyCreateFields!, companyId, 'apply2'));
+    await company.remove('permits/${app2['id']}'); // withdraw
+    await api.remove('permits/${app['id']}');
+  }, skip: skip);
+
+  test('review status for lists and the company home', () async {
+    final company = await signIn('employer@company.com', 'Regress#E1x');
+    final rec = await company.create('hazardous-materials', {'name': 'Mobile review test', 'hazardLevel': 'LOW'});
+    await api.create('reviews', {'entityType': 'HAZARDOUS_MATERIAL', 'entityId': rec['id'], 'status': 'CHANGES_REQUESTED', 'comment': 'Label it'});
+    final latest = await company.list('reviews/latest', query: {'entityType': 'HAZARDOUS_MATERIAL'});
+    expect(latest.firstWhere((r) => r['entityId'] == rec['id'])['status'], 'CHANGES_REQUESTED');
+    expect(integer((await company.one('reviews/summary'))['HAZARDOUS_MATERIAL']), greaterThanOrEqualTo(1));
+    await company.remove('hazardous-materials/${rec['id']}');
+  }, skip: skip);
+
+  test('company registers its own device', () async {
+    final company = await signIn('employer@company.com', 'Regress#E1x');
+    final reg = obj(await company.client.post('iot/devices', {'name': 'Mobile company sensor', 'deviceType': 'NOISE_METER'}))!;
+    expect(text(reg['apiKey']), isNotEmpty);
+    await api.remove('iot/devices/${obj(reg['device'])!['id']}');
   }, skip: skip);
 
   test('staff create forms: complaint, enforcement, corrective action', () async {

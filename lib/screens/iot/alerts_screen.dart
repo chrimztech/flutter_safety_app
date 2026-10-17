@@ -8,6 +8,7 @@ import '../../ui/widgets.dart';
 import '../common/notification_bell.dart';
 import 'alert_detail_screen.dart';
 import 'device_screens.dart';
+import '../../ui/theme.dart';
 
 /// IoT hazard monitoring: alerts raised from workplace sensors, and the devices themselves.
 class AlertsScreen extends StatelessWidget {
@@ -21,14 +22,11 @@ class AlertsScreen extends StatelessWidget {
         appBar: AppBar(
           title: const Text('Hazard alerts'),
           actions: [
-            if (context.me.isStaff)
+            if (context.me.isStaff || context.me.isEmployer)
               IconButton(tooltip: 'Register IoT device', icon: const Icon(Icons.add_circle_outline), onPressed: () => registerDevice(context)),
             const NotificationBell(),
           ],
           bottom: const TabBar(
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            indicatorColor: Colors.white,
             tabs: [Tab(text: 'Alerts'), Tab(text: 'Devices')],
           ),
         ),
@@ -103,11 +101,11 @@ class _DevicesTab extends StatelessWidget {
       emptyIcon: Icons.sensors_off,
       emptyTitle: 'No devices',
       tile: (context, d, reload) => ListTile(
-        leading: Icon(_deviceIcon(d.deviceType), color: d.online ? Colors.green : Theme.of(context).colorScheme.outline),
+        leading: Icon(_deviceIcon(d.deviceType), color: d.online ? OhsColors.green : Theme.of(context).colorScheme.outline),
         title: Text(d.name),
         subtitle: Text([humanize(d.deviceType), d.zone, d.company?.name].whereType<String>().join(' · ')),
         trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Tag(null, label: d.online ? 'Online' : 'Offline', color: d.online ? Colors.green : Colors.grey),
+          Tag(null, label: d.online ? 'Online' : 'Offline', color: d.online ? OhsColors.green : OhsColors.text3),
           const SizedBox(height: 4),
           Text(d.lastSeenAt == null ? 'never seen' : ago(d.lastSeenAt), style: const TextStyle(fontSize: 11)),
         ]),

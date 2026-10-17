@@ -43,10 +43,8 @@ class StaffDashboard extends StatelessWidget {
     final me = context.me;
     return Scaffold(
       appBar: AppBar(
-        title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Hello, ${me.firstName ?? me.name}', style: const TextStyle(fontSize: 18)),
-          Text(me.tenantName ?? 'Occupational Health and Safety', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400)),
-        ]),
+        titleSpacing: 12,
+        title: BrandTitle(title: 'Overview', subtitle: me.tenantName ?? 'Occupational Health and Safety'),
         actions: const [NotificationBell()],
       ),
       body: Loader<_DashboardData>(
@@ -60,9 +58,17 @@ class StaffDashboard extends StatelessWidget {
           return RefreshIndicator(
             onRefresh: reload,
             child: ListView(padding: const EdgeInsets.all(12), children: [
+              WelcomeBanner(
+                eyebrow: fmtToday(),
+                title: '${greeting()}, ${me.firstName ?? me.name}',
+                subtitle: '${me.roleLabel} · ${fmtNum(n('activeInspections'))} active inspections, '
+                    '${fmtNum(n('pendingComplaints'))} complaints waiting',
+              ),
+              const SizedBox(height: 10),
               if (d.openAlerts.isNotEmpty)
                 Card(
-                  color: OhsColors.critical.withValues(alpha: 0.08),
+                  color: OhsColors.redTint,
+                  shape: redNotice,
                   child: ListTile(
                     leading: const Icon(Icons.sensors, color: OhsColors.critical),
                     title: Text('${d.openAlerts.length} open hazard alert${d.openAlerts.length == 1 ? '' : 's'}', style: const TextStyle(fontWeight: FontWeight.w700)),
@@ -78,7 +84,7 @@ class StaffDashboard extends StatelessWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 mainAxisSpacing: 8,
                 crossAxisSpacing: 8,
-                childAspectRatio: 1.35,
+                childAspectRatio: 1.7,
                 children: [
                   StatTile(label: 'Incidents this month', value: fmtNum(n('monthlyIncidents')), icon: Icons.report_problem_outlined, color: OhsColors.high,
                       onTap: () => context.push(const IncidentsScreen())),
@@ -113,8 +119,8 @@ class StaffDashboard extends StatelessWidget {
               ],
               if (d.recommendations.isNotEmpty) ...[
                 const SizedBox(height: 14),
-                Text('  AI PREVENTION RECOMMENDATIONS',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(letterSpacing: 0.8, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w700)),
+                const Text('  AI PREVENTION RECOMMENDATIONS',
+                    style: TextStyle(fontFamily: mono, fontSize: 10.5, letterSpacing: 0.9, color: OhsColors.blueBright)),
                 const SizedBox(height: 6),
                 for (final r in d.recommendations.take(5)) Padding(padding: const EdgeInsets.only(bottom: 8), child: RecommendationCard(r)),
               ],

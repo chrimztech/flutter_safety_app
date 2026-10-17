@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/config.dart';
 import '../../app/context_ext.dart';
 import '../../ui/widgets.dart';
+import '../../ui/theme.dart';
 
 /// The address of the agency's OHS server. Checked with the server's health endpoint before saving.
 class ServerSettingsScreen extends StatefulWidget {
@@ -67,7 +68,7 @@ class _ServerSettingsScreenState extends State<ServerSettingsScreen> {
         if (_status != null) ...[
           const SizedBox(height: 14),
           Row(children: [
-            Icon(_ok ? Icons.check_circle : Icons.error, color: _ok ? Colors.green : Theme.of(context).colorScheme.error),
+            Icon(_ok ? Icons.check_circle : Icons.error, color: _ok ? OhsColors.green : Theme.of(context).colorScheme.error),
             const SizedBox(width: 8),
             Expanded(child: Text(_status!)),
           ]),

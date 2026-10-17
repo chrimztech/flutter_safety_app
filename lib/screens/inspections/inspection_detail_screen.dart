@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../app/context_ext.dart';
+import '../../app/offline_queue.dart';
+import '../../data/json.dart';
 import '../../data/models.dart';
 import '../../ui/format.dart';
 import '../../ui/widgets.dart';
 import '../common/attachments_section.dart';
 import '../common/record_forms.dart';
 import 'checklist_screen.dart';
+import '../../ui/theme.dart';
 
 class InspectionDetailScreen extends StatefulWidget {
   const InspectionDetailScreen({super.key, required this.id});
@@ -27,7 +30,11 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
       appBar: AppBar(title: const Text('Inspection')),
       body: Loader<Inspection>(
         key: _loader,
-        load: () => context.api.inspection(widget.id),
+        load: () {
+          final client = context.api.client;
+          return OfflineQueue.withOfflineCopy('inspection_${widget.id}', () => client.get('inspections/${widget.id}'),
+              (json) => Inspection.fromJson(obj(json)!));
+        },
         builder: (context, i, reload) => RefreshIndicator(
           onRefresh: reload,
           child: ListView(padding: const EdgeInsets.all(12), children: [
@@ -112,7 +119,7 @@ class _InspectionDetailScreenState extends State<InspectionDetailScreen> {
     );
   }
 
-  static Color _scoreColor(double s) => s >= 80 ? Colors.green : s >= 60 ? Colors.orange : Colors.red;
+  static Color _scoreColor(double s) => s >= 80 ? OhsColors.green : s >= 60 ? OhsColors.amber : OhsColors.red;
 }
 
 class _OutcomeSheet extends StatefulWidget {

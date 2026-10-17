@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../app/context_ext.dart';
+import '../../app/offline_queue.dart';
+import '../../data/json.dart';
 import '../../data/models.dart';
 import '../../ui/format.dart';
 import '../../ui/record_list.dart';
@@ -37,7 +39,10 @@ class _InspectionsScreenState extends State<InspectionsScreen> {
       body: RecordList<Inspection>(
         key: _list,
         load: () async {
-          final list = await context.api.inspections();
+          // Kept on the phone so inspections can be opened without a connection.
+          final client = context.api.client;
+          final list = await OfflineQueue.withOfflineCopy('inspections', () => client.get('inspections'),
+              (json) => items(json).map(Inspection.fromJson).toList());
           // Soonest upcoming first, then most recent.
           list.sort((a, b) => (b.scheduledDate ?? DateTime(0)).compareTo(a.scheduledDate ?? DateTime(0)));
           return list;

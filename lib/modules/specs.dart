@@ -160,7 +160,13 @@ final riskAssessmentsSpec = ModuleSpec(
 
 // ---------------------------------------------------------------- permits
 
-const _permitStatuses = ['PENDING', 'APPROVED', 'ACTIVE', 'EXPIRED', 'SUSPENDED', 'REVOKED', 'RENEWAL_PENDING'];
+const _permitTypes = [
+  ('Operating License', 'Operating licence'), ('Factory Registration', 'Factory registration'), ('Hot Work Permit', 'Hot work permit'),
+  ('Confined Space Permit', 'Confined space permit'), ('Work at Height Permit', 'Work at height permit'), ('Explosives Permit', 'Explosives permit'),
+  ('Boiler Certificate', 'Boiler certificate'), ('Other', 'Other'),
+];
+
+const _permitStatuses = ['PENDING', 'APPROVED', 'ACTIVE', 'EXPIRED', 'SUSPENDED', 'REVOKED', 'RENEWAL_PENDING', 'REJECTED'];
 
 final permitsSpec = ModuleSpec(
   id: 'permits',
@@ -172,9 +178,18 @@ final permitsSpec = ModuleSpec(
   subtitleOf: (r) => [text(r['permitNumber']), if (r['expiryDate'] != null) 'Expires ${fmtDate(date(r['expiryDate']))}'].join(' · '),
   statusKey: 'status',
   statusFilters: _permitStatuses,
-  canCreate: (me) => me.isStaff && me.can('employers:write'),
+  // Companies apply (filed as pending); the inspectorate issues, approves or rejects.
+  canCreate: (me) => me.isEmployer || (me.isStaff && me.can('employers:write')),
   canEdit: (me) => me.isStaff && me.can('employers:write'),
   canDelete: (me) => me.isStaff && me.can('employers:write'),
+  companyCreateLabel: 'Apply for a permit',
+  companyCreateFields: const [
+    FieldSpec('type', 'Type', FieldKind.choice, required: true, initial: 'Operating License', options: _permitTypes),
+    FieldSpec('title', 'What is it for?', FieldKind.text, required: true, hint: 'e.g. Welding in maintenance bay'),
+    FieldSpec('activity', 'Activity', FieldKind.text),
+    FieldSpec('expiryDate', 'Needed until (optional)', FieldKind.date),
+    FieldSpec('description', 'Details', FieldKind.multiline, hint: 'Where, how, safety measures in place'),
+  ],
   sort: (a, b) => text(a['expiryDate'], '9999').compareTo(text(b['expiryDate'], '9999')),
   createExtras: const {'status': 'ACTIVE'},
   details: const [
@@ -196,11 +211,7 @@ final permitsSpec = ModuleSpec(
   ],
   createFields: [
     _company,
-    const FieldSpec('type', 'Type', FieldKind.choice, required: true, initial: 'Operating License', options: [
-      ('Operating License', 'Operating licence'), ('Factory Registration', 'Factory registration'), ('Hot Work Permit', 'Hot work permit'),
-      ('Confined Space Permit', 'Confined space permit'), ('Work at Height Permit', 'Work at height permit'), ('Explosives Permit', 'Explosives permit'),
-      ('Boiler Certificate', 'Boiler certificate'), ('Other', 'Other'),
-    ]),
+    const FieldSpec('type', 'Type', FieldKind.choice, required: true, initial: 'Operating License', options: _permitTypes),
     const FieldSpec('title', 'Title', FieldKind.text, required: true),
     const FieldSpec('category', 'Category', FieldKind.text, initial: 'General'),
     const FieldSpec('activity', 'Activity', FieldKind.text),
@@ -221,13 +232,40 @@ final permitsSpec = ModuleSpec(
   ],
   actions: [
     ModuleAction(
+      label: 'Approve application',
+      icon: Icons.check_circle_outline,
+      success: 'Permit granted',
+      fields: const [
+        FieldSpec('expiryDate', 'Valid until', FieldKind.date, required: true),
+        FieldSpec('conditions', 'Conditions', FieldKind.multiline),
+      ],
+      fixed: const {'status': 'ACTIVE'},
+      visible: (me, r) => me.isStaff && me.can('employers:write') && text(r['status']) == 'PENDING',
+    ),
+    ModuleAction(
+      label: 'Reject application',
+      icon: Icons.cancel_outlined,
+      success: 'Application rejected',
+      fields: const [FieldSpec('notes', 'Reason (sent to the company)', FieldKind.multiline, required: true)],
+      fixed: const {'status': 'REJECTED'},
+      visible: (me, r) => me.isStaff && me.can('employers:write') && text(r['status']) == 'PENDING',
+    ),
+    ModuleAction(
+      label: 'Withdraw application',
+      icon: Icons.undo,
+      removes: true,
+      confirm: 'Withdraw this permit application?',
+      success: 'Application withdrawn',
+      visible: (me, r) => me.isEmployer && text(r['status']) == 'PENDING',
+    ),
+    ModuleAction(
       label: 'Renew',
       icon: Icons.autorenew,
       success: 'Permit renewed',
       fields: const [FieldSpec('expiryDate', 'New expiry date', FieldKind.date, required: true)],
       fixed: const {'status': 'ACTIVE'},
       computeFixed: (_) => {'renewalDate': _today()},
-      visible: (me, r) => me.isStaff && me.can('employers:write'),
+      visible: (me, r) => me.isStaff && me.can('employers:write') && text(r['status']) != 'PENDING',
     ),
   ],
 );

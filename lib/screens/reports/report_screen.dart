@@ -62,7 +62,8 @@ class _ReportScreenState extends State<ReportScreen> {
               if ((r.reviewComment ?? '').isNotEmpty) ...[
                 const SizedBox(height: 10),
                 Card(
-                  color: const Color(0xFFFFF8E1),
+                  color: OhsColors.amberTint,
+                  shape: amberNotice,
                   child: ListTile(leading: const Icon(Icons.rate_review_outlined), title: const Text('Reviewer comment'), subtitle: Text(r.reviewComment!)),
                 ),
               ],

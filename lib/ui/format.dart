@@ -73,3 +73,12 @@ Color toneOf(String? value) {
       return OhsColors.neutral;
   }
 }
+
+/// "Good morning" / "Good afternoon" / "Good evening" for the dashboards' banners.
+String greeting([DateTime? at]) {
+  final h = (at ?? DateTime.now()).hour;
+  return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+}
+
+/// "Friday 16 October" for the dashboards' banners.
+String fmtToday() => DateFormat('EEEE d MMMM').format(DateTime.now());

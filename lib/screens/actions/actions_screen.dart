@@ -8,6 +8,7 @@ import '../../ui/widgets.dart';
 import '../common/attachments_section.dart';
 import '../common/notification_bell.dart';
 import '../common/record_forms.dart';
+import '../../ui/theme.dart';
 
 /// Corrective actions: what a company must fix, by when. Companies report progress with evidence; inspectors verify.
 class ActionsScreen extends StatefulWidget {
@@ -59,9 +60,10 @@ class _ActionsScreenState extends State<ActionsScreen> {
           return Padding(
             padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
             child: Card(
-              color: const Color(0xFFFFEBEE),
+              color: OhsColors.redTint,
+              shape: redNotice,
               child: ListTile(
-                leading: const Icon(Icons.schedule, color: Color(0xFFC62828)),
+                leading: const Icon(Icons.schedule, color: OhsColors.red),
                 title: Text('$overdue action${overdue == 1 ? ' is' : 's are'} overdue'),
                 subtitle: const Text('Complete them or contact your inspector.'),
               ),

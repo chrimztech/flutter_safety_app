@@ -6,6 +6,7 @@ import '../../ui/format.dart';
 import '../../ui/widgets.dart';
 import '../auth/change_password_screen.dart';
 import '../auth/server_settings_screen.dart';
+import '../../ui/theme.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
@@ -161,7 +162,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
                         : 'Ended ${humanize(s.endReason)} · signed in ${fmtDateTime(s.createdAt)}'),
                     isThreeLine: s.active && s.ipAddress != null,
                     trailing: s.current
-                        ? const Tag(null, label: 'This device', color: Colors.green)
+                        ? const Tag(null, label: 'This device', color: OhsColors.green)
                         : s.active
                             ? TextButton(
                                 onPressed: () async {

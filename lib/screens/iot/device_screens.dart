@@ -7,12 +7,17 @@ import '../../ui/dynamic_form.dart';
 import '../../ui/format.dart';
 import '../../ui/widgets.dart';
 import 'alert_detail_screen.dart';
+import '../../ui/theme.dart';
 
 const deviceTypes = [
   ('GAS_DETECTOR', 'Gas detector'), ('NOISE_METER', 'Noise monitor'), ('ENVIRONMENT', 'Environment / heat-stress station'),
   ('WEARABLE', 'Worker wearable'), ('VIBRATION', 'Machine vibration sensor'), ('FIRE_SMOKE', 'Smoke / fire detector'),
   ('PROXIMITY', 'Proximity warning system'), ('AI_CAMERA', 'AI camera (edge vision)'),
 ];
+
+/// Company users register devices for their own company (the server files them there).
+List<FieldSpec> _forViewer(BuildContext context) =>
+    context.me.isEmployer ? _deviceFields.where((f) => f.kind != FieldKind.company).toList() : _deviceFields;
 
 const _deviceFields = [
   FieldSpec('name', 'Name', FieldKind.text, required: true, hint: 'e.g. Shaft 3 gas monitor'),
@@ -53,7 +58,7 @@ Future<bool> registerDevice(BuildContext context) async {
   final done = await context.push<Object?>(FormScreen(
     title: 'Register IoT device',
     intro: 'The device sends readings with its own key; alerts are raised automatically by the detection rules.',
-    sections: const [FieldSection('', '', '', _deviceFields)],
+    sections: [FieldSection('', '', '', _forViewer(context))],
     submitLabel: 'Register',
     onSubmit: (p) async => res = await api.client.post('iot/devices', p),
   ));
@@ -93,7 +98,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
               Text(text(dev['name']), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
               const SizedBox(height: 6),
               Wrap(spacing: 6, children: [
-                Tag(null, label: online ? 'Online' : 'Offline', color: online ? Colors.green : Colors.grey),
+                Tag(null, label: online ? 'Online' : 'Offline', color: online ? OhsColors.green : OhsColors.text3),
                 Tag(text(dev['status'])),
               ]),
               const SizedBox(height: 10),
@@ -147,7 +152,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                 ]),
               ],
               const SizedBox(height: 14),
-              if (me.isStaff) ...[
+              if (me.isStaff || me.isEmployer) ...[
                 OutlinedButton.icon(
                   icon: const Icon(Icons.edit_outlined),
                   label: const Text('Edit device'),
@@ -156,7 +161,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                       title: 'Edit device',
                       sections: [
                         FieldSection('', '', '', [
-                          ..._deviceFields,
+                          ..._forViewer(context),
                           const FieldSpec('status', 'Status', FieldKind.choice, options: [('ACTIVE', 'Active'), ('DISABLED', 'Disabled')]),
                         ]),
                       ],

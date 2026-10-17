@@ -7,6 +7,7 @@ import '../../ui/dynamic_form.dart';
 import '../../ui/format.dart';
 import '../../ui/record_list.dart';
 import '../../ui/widgets.dart';
+import '../../ui/theme.dart';
 
 const _roles = [('OFFICER', 'OHS Officer'), ('ADMIN', 'Administrator'), ('EMPLOYER', 'Company user')];
 
@@ -102,7 +103,7 @@ class _UsersScreenState extends State<UsersScreen> {
           final active = u['isActive'] != false;
           return ListTile(
             leading: CircleAvatar(
-              backgroundColor: active ? null : Colors.grey.shade300,
+              backgroundColor: active ? null : OhsColors.bg3,
               child: Text(_name(u).isEmpty ? '?' : _name(u)[0].toUpperCase()),
             ),
             title: Text('${_name(u)}${self ? ' (you)' : ''}'),
@@ -110,8 +111,8 @@ class _UsersScreenState extends State<UsersScreen> {
                 .whereType<String>()
                 .join(' · ')),
             trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Tag(null, label: active ? 'Active' : 'Inactive', color: active ? Colors.green : Colors.grey),
-              if (u['mustChangePassword'] == true) const Text('Awaiting first sign-in', style: TextStyle(fontSize: 10, color: Colors.orange)),
+              Tag(null, label: active ? 'Active' : 'Inactive', color: active ? OhsColors.green : OhsColors.text3),
+              if (u['mustChangePassword'] == true) const Text('Awaiting first sign-in', style: TextStyle(fontSize: 10, color: OhsColors.amber)),
             ]),
             onTap: () async {
               await context.push(UserDetailScreen(user: u));

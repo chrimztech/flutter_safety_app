@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/context_ext.dart';
 import '../../data/api_client.dart';
 import '../../ui/theme.dart';
+import '../../ui/widgets.dart';
 import '../public/public_report_screen.dart';
 import '../public/track_report_screen.dart';
 import 'forgot_password_screen.dart';
@@ -58,91 +59,116 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Form(
-                key: _form,
-                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: IconButton(
-                      tooltip: 'Server address',
-                      icon: const Icon(Icons.dns_outlined),
-                      onPressed: () => context.push(const ServerSettingsScreen()),
-                    ),
-                  ),
-                  const Icon(Icons.health_and_safety, size: 64, color: OhsColors.brand),
-                  const SizedBox(height: 12),
-                  Text('OHS Mobile', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
-                  Text('Occupational Health and Safety', textAlign: TextAlign.center, style: TextStyle(color: scheme.outline)),
-                  const SizedBox(height: 28),
-                  if (_notice != null)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: (_noticeIsError ? scheme.errorContainer : scheme.secondaryContainer),
-                        borderRadius: BorderRadius.circular(10),
+      body: DecoratedBox(
+        // The web sign-in page's backdrop: a soft blue glow over the navy background.
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(center: Alignment(-0.6, -0.9), radius: 1.3, colors: [Color(0xFF14365C), OhsColors.bg0]),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Form(
+                  key: _form,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: IconButton(
+                          tooltip: 'Server address',
+                          icon: const Icon(Icons.dns_outlined),
+                          onPressed: () => context.push(const ServerSettingsScreen()),
+                        ),
                       ),
-                      child: Row(children: [
-                        Icon(_noticeIsError ? Icons.error_outline : Icons.info_outline,
-                            color: _noticeIsError ? scheme.onErrorContainer : scheme.onSecondaryContainer),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(_notice!)),
-                      ]),
-                    ),
-                  TextFormField(
-                    controller: _email,
-                    keyboardType: TextInputType.emailAddress,
-                    autofillHints: const [AutofillHints.email],
-                    decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.mail_outline)),
-                    validator: (v) => v == null || !v.contains('@') ? 'Enter your email address' : null,
+                      const Center(child: BrandMark(size: 60)),
+                      const SizedBox(height: 16),
+                      Text(
+                        'OHS Mobile',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.8),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'OCCUPATIONAL HEALTH AND SAFETY',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontFamily: mono, fontSize: 10.5, letterSpacing: 1.2, color: OhsColors.blueBright),
+                      ),
+                      const SizedBox(height: 28),
+                      if (_notice != null)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(12),
+                          decoration: tintBox(_noticeIsError ? OhsColors.red : OhsColors.blue),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _noticeIsError ? Icons.error_outline : Icons.info_outline,
+                                color: _noticeIsError ? OhsColors.red : OhsColors.blueBright,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(child: Text(_notice!)),
+                            ],
+                          ),
+                        ),
+                      TextFormField(
+                        controller: _email,
+                        keyboardType: TextInputType.emailAddress,
+                        autofillHints: const [AutofillHints.email],
+                        decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.mail_outline)),
+                        validator: (v) => v == null || !v.contains('@') ? 'Enter your email address' : null,
+                      ),
+                      const SizedBox(height: 14),
+                      TextFormField(
+                        controller: _password,
+                        obscureText: _hide,
+                        autofillHints: const [AutofillHints.password],
+                        onFieldSubmitted: (_) => _submit(),
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            icon: Icon(_hide ? Icons.visibility : Icons.visibility_off),
+                            onPressed: () => setState(() => _hide = !_hide),
+                          ),
+                        ),
+                        validator: (v) => v == null || v.isEmpty ? 'Enter your password' : null,
+                      ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () => context.push(ForgotPasswordScreen(email: _email.text)),
+                          child: const Text('Forgot password?'),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      GradientButton(
+                        onPressed: _busy ? null : _submit,
+                        child: _busy
+                            ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                            : const Text('Sign in'),
+                      ),
+                      const SizedBox(height: 28),
+                      const Divider(),
+                      const SizedBox(height: 8),
+                      Text(
+                        'No account? Workers and the public can report a safety concern anonymously.',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: OhsColors.text2),
+                      ),
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        onPressed: () => context.push(const PublicReportScreen()),
+                        icon: const Icon(Icons.campaign_outlined),
+                        label: const Text('Report a safety concern'),
+                      ),
+                      TextButton(onPressed: () => context.push(const TrackReportScreen()), child: const Text('Track a report')),
+                    ],
                   ),
-                  const SizedBox(height: 14),
-                  TextFormField(
-                    controller: _password,
-                    obscureText: _hide,
-                    autofillHints: const [AutofillHints.password],
-                    onFieldSubmitted: (_) => _submit(),
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: IconButton(icon: Icon(_hide ? Icons.visibility : Icons.visibility_off), onPressed: () => setState(() => _hide = !_hide)),
-                    ),
-                    validator: (v) => v == null || v.isEmpty ? 'Enter your password' : null,
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () => context.push(ForgotPasswordScreen(email: _email.text)),
-                      child: const Text('Forgot password?'),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  FilledButton(
-                    onPressed: _busy ? null : _submit,
-                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(50)),
-                    child: _busy ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2.5)) : const Text('Sign in'),
-                  ),
-                  const SizedBox(height: 28),
-                  const Divider(),
-                  const SizedBox(height: 8),
-                  Text('No account? Workers and the public can report a safety concern anonymously.',
-                      textAlign: TextAlign.center, style: TextStyle(color: scheme.outline)),
-                  const SizedBox(height: 10),
-                  OutlinedButton.icon(
-                    onPressed: () => context.push(const PublicReportScreen()),
-                    icon: const Icon(Icons.campaign_outlined),
-                    label: const Text('Report a safety concern'),
-                  ),
-                  TextButton(onPressed: () => context.push(const TrackReportScreen()), child: const Text('Track a report')),
-                ]),
+                ),
               ),
             ),
           ),

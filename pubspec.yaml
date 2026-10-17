@@ -28,6 +28,7 @@ dependencies:
   path_provider: ^2.1.0
   flutter_launcher_icons: ^0.14.4
   firebase_core: ^2.24.2
+  flutter_local_notifications: ^22.3.2
   
 
 dev_dependencies:
@@ -37,7 +38,7 @@ dev_dependencies:
   
 
 flutter_native_splash:
-  color: "#ffffff"
+  color: "#07111f"
   image: assets/logo.jpg
   android: true
   ios: true
@@ -49,6 +50,16 @@ flutter:
     - assets/docs/
     - assets/images/
     - assets/logo.jpg
+  fonts:
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope.ttf
+    - family: IBMPlexMono
+      fonts:
+        - asset: assets/fonts/IBMPlexMono-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexMono-SemiBold.ttf
+          weight: 600
 flutter_icons:
   android: true
   ios: true

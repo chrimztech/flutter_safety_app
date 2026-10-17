@@ -24,8 +24,8 @@ class OhsApp extends StatelessWidget {
       title: 'OHS Mobile',
       debugShowCheckedModeBanner: false,
       navigatorKey: _navigator,
-      theme: buildTheme(Brightness.light),
-      darkTheme: buildTheme(Brightness.dark),
+      theme: buildTheme(),
+      themeMode: ThemeMode.dark,
       home: const _Gate(),
     );
   }

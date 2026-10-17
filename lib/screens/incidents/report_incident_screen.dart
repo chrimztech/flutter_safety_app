@@ -5,6 +5,7 @@ import '../../data/models.dart';
 import '../../ui/format.dart';
 import '../../ui/widgets.dart';
 import '../common/company_picker.dart';
+import '../../ui/theme.dart';
 
 /// Statutory incident notification. Company users report for their own company; officers choose the company.
 class ReportIncidentScreen extends StatefulWidget {
@@ -98,7 +99,7 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
             const Padding(
               padding: EdgeInsets.only(top: 10),
               child: Text('Fatalities and serious injuries must also be reported to the inspectorate by the fastest means (phone) without delay.',
-                  style: TextStyle(color: Color(0xFFC62828), fontWeight: FontWeight.w600)),
+                  style: TextStyle(color: OhsColors.red, fontWeight: FontWeight.w600)),
             ),
           const SizedBox(height: 14),
           TextFormField(

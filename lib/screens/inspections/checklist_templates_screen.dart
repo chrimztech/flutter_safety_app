@@ -5,6 +5,7 @@ import '../../data/fields.dart';
 import '../../data/json.dart';
 import '../../ui/dynamic_form.dart';
 import '../../ui/widgets.dart';
+import '../../ui/theme.dart';
 
 /// Checklist templates used to conduct inspections. Officers and administrators maintain them.
 class ChecklistTemplatesScreen extends StatefulWidget {
@@ -83,7 +84,7 @@ class _ChecklistTemplatesScreenState extends State<ChecklistTemplatesScreen> {
               Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ExpansionTile(
-                  leading: Icon(Icons.checklist, color: t['active'] == false ? Colors.grey : Theme.of(context).colorScheme.primary),
+                  leading: Icon(Icons.checklist, color: t['active'] == false ? OhsColors.text3 : Theme.of(context).colorScheme.primary),
                   title: Text(text(t['name'])),
                   subtitle: Text('${text(t['sector'], 'Any sector')} · ${items(t['items']).length} items${t['active'] == false ? ' · inactive' : ''}'),
                   childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),

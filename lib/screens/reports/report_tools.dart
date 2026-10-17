@@ -7,6 +7,7 @@ import '../../ui/dynamic_form.dart';
 import '../../ui/format.dart';
 import '../../ui/widgets.dart';
 import 'report_screen.dart';
+import '../../ui/theme.dart';
 
 const reportTypes = [
   ('executive', 'Executive overview'), ('incidents', 'Incidents'), ('injury-statistics', 'Injury statistics'),
@@ -100,13 +101,13 @@ class _ReportSchedulesScreenState extends State<ReportSchedulesScreen> {
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Row(children: [
                       Expanded(child: Text('${humanize(text(s['frequency']))} · ${_type(s['type'])}', style: const TextStyle(fontWeight: FontWeight.w700))),
-                      Tag(null, label: s['active'] == false ? 'Paused' : 'Active', color: s['active'] == false ? Colors.grey : Colors.green),
+                      Tag(null, label: s['active'] == false ? 'Paused' : 'Active', color: s['active'] == false ? OhsColors.text3 : OhsColors.green),
                     ]),
                     const SizedBox(height: 4),
                     Text([str(s['employerName']), str(s['district']), str(s['sector'])].whereType<String>().join(' · ').ifEmpty('Whole agency')),
                     Text('Next run ${s['active'] == false ? '—' : fmtDateTime(date(s['nextRunAt']))} · last run ${fmtDateTime(date(s['lastRunAt']))}',
                         style: const TextStyle(fontSize: 12)),
-                    if (str(s['lastError']) != null) Text('Last run failed: ${s['lastError']}', style: const TextStyle(color: Colors.red, fontSize: 12)),
+                    if (str(s['lastError']) != null) Text('Last run failed: ${s['lastError']}', style: const TextStyle(color: OhsColors.red, fontSize: 12)),
                     Wrap(spacing: 4, children: [
                       TextButton(
                         onPressed: () async {

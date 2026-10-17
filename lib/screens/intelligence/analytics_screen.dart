@@ -36,9 +36,6 @@ class AnalyticsScreen extends StatelessWidget {
         appBar: AppBar(
           title: const Text('Analytics'),
           bottom: const TabBar(
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            indicatorColor: Colors.white,
             tabs: [Tab(text: 'Overview'), Tab(text: 'Injury rates'), Tab(text: 'Risk map')],
           ),
         ),
@@ -212,13 +209,13 @@ class _RiskMap extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               // Heat: more incidents and high-risk companies → warmer colour.
-              color: Color.lerp(const Color(0xFFE8F5E9), const Color(0xFFFFCDD2), (integer(x['incidents']) ?? 0) / maxIncidents),
+              color: Color.lerp(OhsColors.greenTint, const Color(0x59FB7185), (integer(x['incidents']) ?? 0) / maxIncidents),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(children: [
-              Expanded(child: Text(text(x['name'], 'Unknown'), style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.black87))),
+              Expanded(child: Text(text(x['name'], 'Unknown'), style: const TextStyle(fontWeight: FontWeight.w700))),
               Text('${fmtNum(x['employers'])} cos · ${fmtNum(x['incidents'])} inc · ${fmtNum(x['highRisk'])} high risk · ${fmtNum(x['compliance'])}%',
-                  style: const TextStyle(fontSize: 12, color: Colors.black87)),
+                  style: const TextStyle(fontFamily: mono, fontSize: 11, color: OhsColors.text2)),
             ]),
           ),
       ]),

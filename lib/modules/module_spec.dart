@@ -38,6 +38,7 @@ class ModuleAction {
     this.confirm,
     this.success,
     this.computeFixed,
+    this.removes = false,
   });
 
   final String label;
@@ -51,6 +52,9 @@ class ModuleAction {
   final bool Function(AppUser me, Json record)? visible;
   final String? confirm;
   final String? success;
+
+  /// Deletes the record instead of updating it (e.g. withdrawing an application).
+  final bool removes;
 }
 
 bool _staff(AppUser me) => me.isStaff;
@@ -88,6 +92,8 @@ class ModuleSpec {
     this.description,
     this.header,
     this.reviewType,
+    this.companyCreateFields,
+    this.companyCreateLabel,
   });
 
   final String id;
@@ -119,6 +125,10 @@ class ModuleSpec {
   final String? emptyMessage;
   final int Function(Json a, Json b)? sort;
   final String? description;
+
+  /// What a company user fills in when creating (e.g. a permit application); defaults to [createFields].
+  final List<FieldSpec>? companyCreateFields;
+  final String? companyCreateLabel;
 
   /// Set for registers the company keeps itself (duty holder): the inspectorate records reviews of type [reviewType].
   final String? reviewType;

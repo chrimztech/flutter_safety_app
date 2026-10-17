@@ -4,6 +4,7 @@ import '../../app/context_ext.dart';
 import '../../data/json.dart';
 import '../../ui/format.dart';
 import '../../ui/widgets.dart';
+import '../../ui/theme.dart';
 
 /// The tamper-evident audit trail: filter by category and text, open an entry, verify the hash chain.
 /// [basePath] is `audit-logs` for an agency or `platform/audit` for the platform console.
@@ -73,7 +74,7 @@ class _AuditScreenState extends State<AuditScreen> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        icon: Icon(verified ? Icons.verified : Icons.gpp_bad, color: verified ? Colors.green : Colors.red, size: 40),
+        icon: Icon(verified ? Icons.verified : Icons.gpp_bad, color: verified ? OhsColors.green : OhsColors.red, size: 40),
         title: Text(verified ? 'Audit trail intact' : 'Integrity problems found'),
         content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('${r!['checkedEntries'] ?? 0} entries checked.'),
@@ -136,7 +137,7 @@ class _AuditScreenState extends State<AuditScreen> {
                         final ok = e['success'] != false && (integer(e['statusCode']) ?? 200) < 400;
                         return ListTile(
                           dense: true,
-                          leading: Icon(ok ? Icons.check_circle_outline : Icons.error_outline, color: ok ? Colors.green : Colors.red, size: 20),
+                          leading: Icon(ok ? Icons.check_circle_outline : Icons.error_outline, color: ok ? OhsColors.green : OhsColors.red, size: 20),
                           title: Text(text(e['description'], text(e['action'])), maxLines: 2, overflow: TextOverflow.ellipsis),
                           subtitle: Text('${text(e['actorEmail'], 'system')} · ${fmtDateTime(date(e['timestamp']))}'),
                           onTap: () => _detail(text(e['id'])),

@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.CAMERA"/>
@@ -19,8 +20,7 @@
         android:label="OHS Mobile"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true"
-        android:requestLegacyExternalStorage="true"> <!-- usesCleartextTraffic: allows http:// servers during development; use https:// in production --> <!-- Important for older Android versions to access files -->
+        android:requestLegacyExternalStorage="true"> <!-- Important for older Android versions to access files -->
 
         <activity
             android:name=".MainActivity"

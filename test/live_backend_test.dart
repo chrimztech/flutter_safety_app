@@ -29,6 +29,7 @@ import 'package:flutter_app_scaffold/screens/incidents/incidents_screen.dart';
 import 'package:flutter_app_scaffold/screens/iot/alerts_screen.dart';
 import 'package:flutter_app_scaffold/screens/notifications/notifications_screen.dart';
 import 'package:flutter_app_scaffold/screens/public/public_report_screen.dart';
+import 'package:flutter_app_scaffold/ui/format.dart';
 import 'package:flutter_app_scaffold/ui/theme.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -58,14 +59,15 @@ void main() {
     await tester.binding.setSurfaceSize(size); // a typical phone unless a check needs the whole page laid out
     await tester.pumpWidget(ChangeNotifierProvider.value(
       value: session,
-      child: MaterialApp(theme: buildTheme(Brightness.light), home: screen),
+      child: MaterialApp(theme: buildTheme(), home: screen),
     ));
     for (var i = 0; i < 6; i++) {
       await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 400)));
       await tester.pump(const Duration(milliseconds: 100));
     }
     expect(tester.takeException(), isNull);
-    expect(find.byType(CircularProgressIndicator), findsNothing, reason: 'still loading');
+    // Determinate indicators (e.g. the compliance score ring) are content, not loading spinners.
+    expect(find.byWidgetPredicate((w) => w is CircularProgressIndicator && w.value == null), findsNothing, reason: 'still loading');
     expect(find.text('Something went wrong'), findsNothing);
     checks?.call();
     // Let the HTTP client's keep-alive timers (created on the test clock) expire before the test ends.
@@ -78,8 +80,8 @@ void main() {
     testWidgets('dashboard shows live figures', (tester) async {
       final s = await signIn(tester, 'officer@ohs.gov.zm', 'Regress#O1x');
       await show(tester, s, const HomeShell(), () {
-        expect(find.text('Incidents this month'), findsOneWidget);
-        expect(find.textContaining('Hello,'), findsOneWidget);
+        expect(find.text('INCIDENTS THIS MONTH'), findsOneWidget);
+        expect(find.textContaining('${greeting()},'), findsOneWidget);
       });
     });
 
@@ -110,7 +112,7 @@ void main() {
       final s = await signIn(tester, 'employer@company.com', 'Regress#E1x');
       await show(tester, s, const HomeShell(), () {
         expect(find.text('Zambia Copper Mining Ltd'), findsOneWidget);
-        expect(find.text('Open actions'), findsOneWidget);
+        expect(find.text('OPEN ACTIONS'), findsOneWidget);
         expect(find.text('Dashboard'), findsNothing, reason: 'company users get the company navigation');
       });
     });
@@ -160,7 +162,7 @@ void main() {
       });
       for (final spec in specs) {
         await show(tester, s, ModuleListScreen(spec: spec), () => expect(find.text(spec.title), findsOneWidget));
-        await show(tester, s, ModuleDetailScreen(spec: spec, id: created[spec.id]!), () => expect(find.text('DETAILS'), findsOneWidget));
+        await show(tester, s, ModuleDetailScreen(spec: spec, id: created[spec.id]!), () => expect(find.text('Details'), findsOneWidget));
       }
       await tester.runAsync(() async {
         for (final spec in specs) {
@@ -187,7 +189,7 @@ void main() {
       final s = await signIn(tester, 'officer@ohs.gov.zm', 'Regress#O1x');
       late String id;
       await tester.runAsync(() async => id = (await s.api.devices()).first.id);
-      await show(tester, s, DeviceDetailScreen(id: id), () => expect(find.textContaining('READINGS'), findsOneWidget));
+      await show(tester, s, DeviceDetailScreen(id: id), () => expect(find.textContaining('Readings'), findsOneWidget));
     });
 
     testWidgets('officer menu hides administration', (tester) async {

@@ -8,6 +8,8 @@ import '../data/api_client.dart';
 import '../data/models.dart';
 import '../data/ohs_api.dart';
 import 'config.dart';
+import 'local_alerts.dart';
+import 'offline_queue.dart';
 
 enum SessionStatus { starting, signedOut, signedIn }
 
@@ -31,6 +33,7 @@ class SessionController extends ChangeNotifier {
   SessionStatus _status = SessionStatus.starting;
   String? _signOutReason;
   int _unread = 0;
+  bool _announce = false;
   Timer? _poll;
   String _serverUrl = ServerConfig.defaultUrl;
 
@@ -134,6 +137,15 @@ class SessionController extends ChangeNotifier {
     if (_status != SessionStatus.signedIn) return;
     try {
       final n = await api.unreadNotifications();
+      if (n > _unread && _announce) {
+        // Something new arrived since the last check: show it as a phone notification.
+        final newest = (await api.notifications()).where((x) => !x.read).toList()
+          ..sort((a, b) => (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)));
+        if (newest.isNotEmpty) {
+          await LocalAlerts.show(newest.first.title, n - _unread > 1 ? '${newest.first.message} (+${n - _unread - 1} more)' : newest.first.message);
+        }
+      }
+      _announce = true; // the first check after sign-in only sets the baseline
       if (n != _unread) {
         _unread = n;
         notifyListeners();
@@ -176,8 +188,14 @@ class SessionController extends ChangeNotifier {
 
   void _startPolling() {
     _poll?.cancel();
+    _announce = false;
+    unawaited(LocalAlerts.init());
     unawaited(refreshUnread());
-    _poll = Timer.periodic(const Duration(seconds: 60), (_) => refreshUnread());
+    _poll = Timer.periodic(const Duration(seconds: 60), (_) {
+      refreshUnread();
+      // Checklist results saved offline are sent once the connection is back.
+      OfflineQueue.syncAll(api);
+    });
   }
 
   void _set(SessionStatus s) {

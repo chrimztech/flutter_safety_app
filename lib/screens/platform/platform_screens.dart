@@ -11,6 +11,7 @@ import '../account/account_screen.dart';
 import '../admin/audit_screen.dart';
 import '../admin/users_screen.dart' show showInvitation;
 import '../common/notification_bell.dart';
+import '../../ui/theme.dart';
 
 /// Platform console for the super-admin: agencies, platform users, active sessions, audit, all companies.
 class PlatformShell extends StatefulWidget {
@@ -341,7 +342,7 @@ class PlatformUsersScreen extends StatelessWidget {
           return ListTile(
             title: Text('${text(u['firstName'])} ${text(u['lastName'])}'.trim()),
             subtitle: Text([text(u['email']), humanize(text(u['role'])), str(u['agencyName']) ?? 'Platform', str(u['employerName'])].whereType<String>().join(' · ')),
-            trailing: Tag(null, label: active ? 'Active' : 'Inactive', color: active ? Colors.green : Colors.grey),
+            trailing: Tag(null, label: active ? 'Active' : 'Inactive', color: active ? OhsColors.green : OhsColors.text3),
             onTap: superAdmin
                 ? null
                 : () => showModalBottomSheet<void>(

@@ -31,6 +31,52 @@ Everyone: first sign-in forces a password change, forgot password, signed-in dev
 server address, sign out. When the server ends a session (idle timeout, signed out elsewhere, password changed,
 account deactivated) the app returns to the sign-in screen and says why.
 
+## Working in the field
+
+* **Offline checklists.** Each inspection checklist is saved on the phone when it is opened. Without a connection the
+  inspector can still record Pass / Fail / N/A and notes; the results are kept on the phone and sent automatically
+  when the connection returns (next time the checklist is opened, or by the background check every minute). A banner
+  shows when results are waiting to be sent.
+* **Phone notifications.** While the app is open or in the background it checks for new notifications every minute
+  and shows new ones (hazard alerts, regulator reviews, permit decisions…) as phone notifications. Delivery when the app
+  has been closed needs push messaging (Firebase Cloud Messaging) — see *Before publishing*.
+* **Duty holder.** Companies keep their own registers (risk assessments, chemicals, equipment, emergency log, medical
+  surveillance, safety culture), apply for permits and register their own sensors; inspectors review the registers and
+  decide applications. Each register record shows its current regulator review.
+
+## Release build
+
+1. Create an upload key once (keep it safe — it signs every future update):
+
+   ```
+   keytool -genkey -v -keystore %USERPROFILE%\ohs-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+   ```
+
+2. Create `android/key.properties` (it is git-ignored):
+
+   ```
+   storeFile=C:\\Users\\<you>\\ohs-upload.jks
+   storePassword=...
+   keyAlias=upload
+   keyPassword=...
+   ```
+
+3. Build against the agency's **https** server (release builds refuse plain http):
+
+   ```
+   flutter build appbundle --dart-define=OHS_API_URL=https://ohs.example.gov
+   ```
+
+Without `key.properties` a release build is signed with the debug key — fine for testing, not accepted by the Play Store.
+
+## Before publishing
+
+* **Application ID** — still `com.example.flutter_app_scaffold` (Android `applicationId`/`namespace` in
+  `android/app/build.gradle.kts`, the `MainActivity.kt` package folder, and iOS `PRODUCT_BUNDLE_IDENTIFIER`). It is
+  permanent once published. The Firebase project (`android/app/google-services.json`) is registered for the current ID,
+  so register the new ID in Firebase and download a new `google-services.json` when you change it.
+* **Push when the app is closed** — needs Firebase Cloud Messaging: the server sends to device tokens the app registers.
+
 ## Running
 
 1. Start the backend (see the platform's `GETTING_STARTED.md`). It listens on port 8080.

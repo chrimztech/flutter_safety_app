@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../app/context_ext.dart';
+import '../../data/json.dart';
 import '../../data/models.dart';
+import '../../modules/module_screens.dart';
+import '../../modules/module_spec.dart';
+import '../../modules/specs.dart';
 import '../../ui/format.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
@@ -12,7 +16,13 @@ import '../iot/alert_detail_screen.dart';
 import '../iot/alerts_screen.dart';
 import 'quick_actions.dart';
 
-typedef _HomeData = ({Company company, List<CorrectiveAction> actions, List<HazardEvent> alerts, List<Incident> incidents});
+typedef _HomeData = ({Company company, List<CorrectiveAction> actions, List<HazardEvent> alerts, List<Incident> incidents, Json reviews});
+
+/// Registers the company keeps itself, with the screen to open when the inspectorate asked for changes.
+final _reviewedRegisters = <String, ModuleSpec>{
+  'RISK_ASSESSMENT': riskAssessmentsSpec, 'HAZARDOUS_MATERIAL': hazmatSpec, 'EQUIPMENT_CERTIFICATION': equipmentSpec,
+  'EMERGENCY_RESPONSE': emergencySpec, 'MEDICAL_SURVEILLANCE': medicalSpec, 'SAFETY_CULTURE': safetyCultureSpec,
+};
 
 /// Home for company users: what needs attention at their workplace.
 class CompanyHome extends StatelessWidget {
@@ -25,12 +35,14 @@ class CompanyHome extends StatelessWidget {
       api.correctiveActions().catchError((_) => <CorrectiveAction>[]),
       api.hazardEvents().catchError((_) => <HazardEvent>[]),
       api.incidents().catchError((_) => <Incident>[]),
+      api.one('reviews/summary').catchError((_) => <String, dynamic>{}),
     ]);
     return (
       company: r[0] as Company,
       actions: r[1] as List<CorrectiveAction>,
       alerts: (r[2] as List<HazardEvent>).where((e) => e.isOpen).toList(),
       incidents: r[3] as List<Incident>,
+      reviews: r[4] as Json,
     );
   }
 
@@ -39,10 +51,8 @@ class CompanyHome extends StatelessWidget {
     final me = context.me;
     return Scaffold(
       appBar: AppBar(
-        title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(me.employerName ?? 'My company', style: const TextStyle(fontSize: 18)),
-          Text('Signed in as ${me.name}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w400)),
-        ]),
+        titleSpacing: 12,
+        title: BrandTitle(title: me.employerName ?? 'My company', subtitle: 'Signed in as ${me.name}'),
         actions: const [NotificationBell()],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -59,11 +69,43 @@ class CompanyHome extends StatelessWidget {
           return RefreshIndicator(
             onRefresh: reload,
             child: ListView(padding: const EdgeInsets.all(12), children: [
+              WelcomeBanner(
+                eyebrow: fmtToday(),
+                title: '${greeting()}, ${me.firstName ?? me.name}',
+                subtitle: [d.company.name, if (d.company.sector != null) d.company.sector!].join(' · '),
+                trailing: d.company.complianceScore == null ? null : _ScoreRing(d.company.complianceScore!),
+              ),
+              const SizedBox(height: 10),
+              if ((integer(d.reviews['changesRequested']) ?? 0) > 0)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Card(
+                    color: OhsColors.amberTint,
+                    shape: amberNotice,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('The inspectorate asked for changes to ${d.reviews['changesRequested']} of your records',
+                            style: const TextStyle(fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 6),
+                        Wrap(spacing: 6, runSpacing: 6, children: [
+                          for (final e in _reviewedRegisters.entries)
+                            if ((integer(d.reviews[e.key]) ?? 0) > 0)
+                              ActionChip(
+                                label: Text('${e.value.title}: ${d.reviews[e.key]}'),
+                                onPressed: () => context.push(ModuleListScreen(spec: e.value)),
+                              ),
+                        ]),
+                      ]),
+                    ),
+                  ),
+                ),
               for (final a in d.alerts.take(3))
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Card(
-                    color: toneOf(a.severity).withValues(alpha: 0.1),
+                    color: toneOf(a.severity).withValues(alpha: 0.12),
+                    shape: noticeShape(toneOf(a.severity)),
                     child: ListTile(
                       leading: Icon(Icons.warning_amber_rounded, color: toneOf(a.severity)),
                       title: Text(a.message, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700)),
@@ -79,7 +121,7 @@ class CompanyHome extends StatelessWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 mainAxisSpacing: 8,
                 crossAxisSpacing: 8,
-                childAspectRatio: 1.35,
+                childAspectRatio: 1.7,
                 children: [
                   StatTile(label: 'Open actions', value: '${open.length}', icon: Icons.checklist_rtl, onTap: () => context.push(const ActionsScreen())),
                   StatTile(label: 'Overdue actions', value: '$overdue', icon: Icons.schedule, color: overdue > 0 ? OhsColors.critical : OhsColors.low,
@@ -121,6 +163,31 @@ class CompanyHome extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+/// Compliance score as a ring, coloured like the web's score badges.
+class _ScoreRing extends StatelessWidget {
+  const _ScoreRing(this.score);
+
+  final double score;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = score >= 80 ? OhsColors.green : score >= 60 ? OhsColors.amber : OhsColors.red;
+    return SizedBox(
+      width: 62,
+      height: 62,
+      child: Stack(alignment: Alignment.center, children: [
+        SizedBox.expand(
+          child: CircularProgressIndicator(value: (score / 100).clamp(0, 1), strokeWidth: 5, color: c, backgroundColor: OhsColors.bg3),
+        ),
+        Column(mainAxisSize: MainAxisSize.min, children: [
+          Text('${score.round()}', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, height: 1)),
+          const Text('SCORE', style: TextStyle(fontFamily: mono, fontSize: 7.5, color: OhsColors.text3, letterSpacing: 0.6)),
+        ]),
+      ]),
     );
   }
 }

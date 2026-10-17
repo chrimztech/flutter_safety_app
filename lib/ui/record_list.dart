@@ -76,7 +76,7 @@ class RecordListState<T> extends State<RecordList<T>> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
                         child: Text(
-                          shown.length == all.length ? '${all.length} records' : '${shown.length} of ${all.length} records',
+                          shown.length == all.length ? '${all.length} record${all.length == 1 ? '' : 's'}' : '${shown.length} of ${all.length}',
                           style: TextStyle(color: Theme.of(context).colorScheme.outline, fontSize: 12),
                         ),
                       ),

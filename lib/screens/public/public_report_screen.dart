@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/context_ext.dart';
 import '../../data/models.dart';
 import '../../ui/widgets.dart';
+import '../../ui/theme.dart';
 
 /// Report a safety concern without an account. The reporter receives a reference number and a tracking code.
 class PublicReportScreen extends StatefulWidget {
@@ -83,7 +84,7 @@ class _PublicReportScreenState extends State<PublicReportScreen> {
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
-          icon: const Icon(Icons.check_circle, color: Colors.green, size: 40),
+          icon: const Icon(Icons.check_circle, color: OhsColors.green, size: 40),
           title: const Text('Report received'),
           content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(r.message),
@@ -175,7 +176,8 @@ class _PublicReportScreenState extends State<PublicReportScreen> {
                     ],
                     if (_urgency == 'critical')
                       const Card(
-                        color: Color(0xFFFFEBEE),
+                        color: OhsColors.redTint,
+                        shape: redNotice,
                         child: Padding(
                           padding: EdgeInsets.all(12),
                           child: Text('If someone is in immediate danger, call emergency services first.'),
